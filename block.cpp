@@ -105,13 +105,13 @@ block::operator+= (const block &x)
 }
 
 execution_status
-block::init_block (size_t _b_size, double _eps)
+block::init_block (size_t m_size, size_t b_size, double eps)
 {
-  r_num = c_num = _b_size;
-  set_b_size (_b_size);
-  set_eps (_eps);
+  r_num = c_num = b_size;
+  init_m_sizes(m_size, b_size);
+  set_eps (eps);
   execution_status status
-      = static_cast<data *> (this)->data_memory_allocate (_b_size * _b_size);
+      = static_cast<data *> (this)->data_memory_allocate (b_size * b_size);
   if (status != execution_status::success)
     return status;
   zero_padding ();

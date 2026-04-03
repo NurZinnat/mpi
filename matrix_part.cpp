@@ -23,18 +23,14 @@ matrix_part::init_matrix_part (size_t m_size, size_t b_size, size_t _index,
   part_index = _index;
   p = _p;
   size_t k = get_k ();
-  part_size = k / p + (part_index <= (k - 1) % p ? 1 : 0);
+  size_t r = get_r ();
+  part_size = k / p + (k % p && part_index <= (k - 1) % p ? 1 : 0);
   // printf ("k = %ld p = %ld part_size = %ld\n", k, p, part_size);
-
-  execution_status status = data_memory_allocate (
-      m_size * b_size * (part_size - 1) + ((p * part_size + part_index)
-              == k - 1
-          ? m_size * get_r ()
-          : m_size * b_size));
-  if (status != execution_status::success)
-    return status;
-
-  return execution_status::success;
+  size_t arr_size
+      = m_size * b_size * (part_size - 1)
+        + (r != 0 && (k - 1) % p == part_index ? m_size * r : m_size * b_size);
+  // printf ("arr_size = %ld\n", arr_size);
+  return data_memory_allocate (arr_size);
 }
 
 void
@@ -74,6 +70,7 @@ matrix_part::formula (size_t s, size_t i, size_t j)
     default:
       break;
     }
+  // if (part_index == 0)
   // printf ("res = %lf\n", res);
   return res;
 }
@@ -87,16 +84,11 @@ matrix_part::init_by_formula (size_t s)
   double *arr = get_arr ();
   size_t arr_index = 0;
   size_t r_start = 0;
-  // printf ("part_size = %ld\n", part_size);
-  size_t arr_size = get_arr_size ();
-  printf ("arr_size = %ld\n", arr_size);
-
+  // size_t arr_size = get_arr_size ();
+  // printf ("part_size = %ld arr_size = %ld\n", part_size, arr_size);
   for (size_t local_b_row_index = 0; local_b_row_index < part_size;
        local_b_row_index++)
     {
-      // printf ("flasg\n");
-      if (local_b_row_index == 3)
-        return;
       size_t global_b_row_index = part_index + local_b_row_index * p;
       size_t r_end = r_start + get_bost_size (global_b_row_index);
       r_start = b_size * global_b_row_index;
@@ -110,19 +102,10 @@ matrix_part::init_by_formula (size_t s)
             for (size_t c_index = c_start; c_index < c_end; c_index++)
               {
                 arr[arr_index++] = formula (s, r_index, c_index);
-                if (arr_index == arr_size)
-                  {
-                    printf ("local_b_row_index = %ld, global_b_col_index = "
-                            "%ld, r_index = %ld, c_index = %ld\n",
-                            local_b_row_index, global_b_col_index, r_index,
-                            c_index);
-                  }
-                // printf ("suka\n");
               }
           c_start += b_size;
         }
     }
-  // printf ("end_kaka\n");
 }
 
 execution_status
@@ -146,7 +129,6 @@ matrix_part::read_b_row_from_file_to_arr (size_t global_b_row_index,
           for (size_t u = start; u < end; u++)
             if (fscanf (fp, "%lf", &arr[u]) != 1)
               {
-                fclose (fp);
                 return execution_status::read;
               }
           b_start += c_step;
@@ -161,20 +143,34 @@ matrix_part::get_row_part (size_t row_index, size_t row_size, double *row)
   double *arr = get_arr ();
   size_t b_size = get_b_size ();
   size_t m_size = get_m_size ();
+  size_t r = get_r ();
+  size_t k = get_k ();
   size_t global_b_row_index = row_index / b_size;
   if (global_b_row_index % p != part_index)
     return execution_status::runtime_error;
   size_t local_b_row_index = global_b_row_index / p;
-  size_t step = b_size * get_bost_size (global_b_row_index);
-  arr += b_size * m_size * local_b_row_index + (row_index % b_size) * b_size;
-  size_t k_stop = (row_size / b_size + 1);
-  for (size_t i = 0; i < k_stop; i++)
+  size_t rb_size = get_bost_size (global_b_row_index);
+  size_t step = b_size * rb_size;
+  size_t row_index_in_block = (row_index % b_size);
+  arr += b_size * m_size * local_b_row_index + row_index_in_block * b_size;
+  size_t k_stop = row_size / b_size + 1;
+  // printf (
+  //     "\n\n\n\n\n\n\n\nk_stop = %ld row_index = %ld global_b_row_index = %ld
+  //     " "local_b_row_index = %ld\n\n", k_stop, row_index,
+  //     global_b_row_index, local_b_row_index);
+  for (size_t i = 0; i < k_stop - 1; i++)
     {
-      size_t cb_size = get_bost_size (i);
-      array_copy (cb_size, row, arr);
-      row += cb_size;
+
+      array_copy (b_size, row, arr);
+      row += b_size;
       arr += step;
     }
+  if (k_stop == k)
+    arr -= row_index_in_block * (b_size - r);
+  array_copy (b_size, row, arr);
+  row += b_size;
+  arr += step;
+
   return execution_status::success;
 }
 
@@ -209,11 +205,10 @@ matrix_part::calculate_norm_part (size_t global_b_col_index, double *norm_part)
   arr += b_size * b_size * global_b_col_index;
   size_t cb_size = get_bost_size (global_b_col_index);
   size_t step = m_size * b_size;
-  for (size_t i = 0; i < k - 1; i++)
+  for (size_t i = 0; i < part_size - 1; i++)
     {
-      size_t rb_size = get_bost_size (i);
       double *sub_arr = arr;
-      for (size_t j = 0; j < rb_size; j++)
+      for (size_t j = 0; j < b_size; j++)
         {
           for (size_t u = 0; u < cb_size; u++)
             {
@@ -223,8 +218,12 @@ matrix_part::calculate_norm_part (size_t global_b_col_index, double *norm_part)
         }
       arr += step;
     }
-  arr -= (b_size - r) * b_size * global_b_col_index;
-  size_t rb_size = get_bost_size (k - 1);
+  size_t global_b_row_index = p * (part_size - 1) + part_index;
+  if (global_b_row_index == k - 1 && r)
+    {
+      arr -= (b_size - r) * b_size * global_b_col_index;
+    }
+  size_t rb_size = get_bost_size (global_b_row_index);
   double *sub_arr = arr;
   for (size_t j = 0; j < rb_size; j++)
     {

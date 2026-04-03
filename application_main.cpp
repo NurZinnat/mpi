@@ -7,19 +7,18 @@ application::application_main (size_t argc, char *argv[])
     return;
 
   init_application ();
-
   if (inactive ())
     return;
   if (has_error (status))
     return;
-  
-  read_matrix ();
-  return;
 
+  read_matrix ();
   if (has_error (status))
     return;
 
   print_matrix ();
-  printf ("\n");
+
+  norm_calculate ();
+
   print_transpozition_matrix ();
 }

@@ -1,13 +1,4 @@
 # Компилятор Intel MPI
-
-# Источник окружения Intel MPI
-INTEL_MPI_SETUP = source /opt/intel/oneapi/mpi/2021.17/env/vars.sh 2>/dev/null || true
-
-run-debug: $(DEBUG_TARGET)
-	. /opt/intel/oneapi/mpi/2021.17/env/vars.sh && \
-	I_MPI_OFI_LIBRARY_INTERNAL=1 \
-	$(MPIRUN) -np 4 ./$(DEBUG_TARGET)
-
 CC = g++
 MPICXX = /opt/intel/oneapi/mpi/2021.17/bin/mpicxx
 MPIRUN = /opt/intel/oneapi/mpi/2021.17/bin/mpirun
@@ -15,6 +6,15 @@ MPIRUN = /opt/intel/oneapi/mpi/2021.17/bin/mpirun
 # Пути Intel MPI
 MPI_INCLUDE = -I/opt/intel/oneapi/mpi/2021.17/include
 MPI_LIB = -L/opt/intel/oneapi/mpi/2021.17/lib/release -lmpi
+
+# Переменные для запуска (можно переопределять в командной строке)
+PROC ?= 4
+ARGS ?=
+
+# Переменные окружения для стабильной работы Intel MPI
+MPI_ENV = . /opt/intel/oneapi/mpi/2021.17/env/vars.sh && \
+          I_MPI_FABRICS=shm \
+          I_MPI_OFI_LIBRARY_INTERNAL=1
 
 # Флаги компиляции (Релиз)
 FLAGS = -mfpmath=sse -fstack-protector-all -g -W -Wall -Wextra -Wunused -Wcast-align -Werror -pedantic -pedantic-errors -Wfloat-equal -Wpointer-arith -Wformat-security -Wmissing-format-attribute -Wformat=1 -Wwrite-strings -Wcast-align -Wno-long-long -Woverloaded-virtual -Wnon-virtual-dtor -Wcast-qual -Wno-suggest-attribute=format
@@ -135,24 +135,21 @@ application_main_debug.o: application_main.cpp application.h
 clean:
 	rm -rf *.o $(TTT) $(DEBUG_TARGET) *.d
 
-run: $(TTT)
-	$(MPIRUN) -np 4 ./$(TTT)
+# Запуск релизной версии (с переменными PROC и ARGS)
+run-release: $(TTT)
+	$(MPI_ENV) $(MPIRUN) -np $(PROC) ./$(TTT) $(ARGS)
 
+# Запуск отладочной версии (с переменными PROC и ARGS)
 run-debug: $(DEBUG_TARGET)
-	$(MPIRUN) -np 4 ./$(DEBUG_TARGET)
+	$(MPI_ENV) $(MPIRUN) -np $(PROC) ./$(DEBUG_TARGET) $(ARGS)
 
 # Отладка в gdb (открывает отдельное окно xterm)
 gdb: $(DEBUG_TARGET)
-	. /opt/intel/oneapi/mpi/2021.17/env/vars.sh && \
-	I_MPI_FABRICS=shm \
-	I_MPI_OFI_LIBRARY_INTERNAL=1 \
-	$(MPIRUN) -np 1 xterm -e gdb --args ./$(DEBUG_TARGET) 10 3 10 3
+	$(MPI_ENV) $(MPIRUN) -np $(PROC) xterm -e gdb --args ./$(DEBUG_TARGET) $(ARGS)
 
 # Отладка в gdb (текущий терминал, без xterm)
 gdb-here: $(DEBUG_TARGET)
-	. /opt/intel/oneapi/mpi/2021.17/env/vars.sh && \
-	I_MPI_FABRICS=shm \
-	I_MPI_OFI_LIBRARY_INTERNAL=1 \
-	$(MPIRUN) -np 1 gdb --args ./$(DEBUG_TARGET) 10 3 10 3
+	$(MPI_ENV) $(MPIRUN) -np $(PROC) gdb --args ./$(DEBUG_TARGET) $(ARGS)
 
-.PHONY: all debug clean run run-debug
+
+.PHONY: all debug clean run-release run-debug gdb gdb-here

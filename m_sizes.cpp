@@ -53,6 +53,8 @@ m_sizes::init_m_sizes (size_t _m_size, size_t _b_size)
   b_size = _b_size;
   k = m_size / b_size;
   r = m_size % b_size;
+  if (r)
+    k++;
   return execution_status::success;
 }
 
@@ -85,7 +87,6 @@ m_sizes::set_b_size (size_t val)
 {
   b_size = val;
 }
-
 
 size_t
 m_sizes::get_bost_size (size_t index)

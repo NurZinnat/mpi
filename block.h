@@ -38,7 +38,7 @@ public:
   void set_m_type (matrix_type _m_type);
   void print ();
 
-  execution_status init_block (size_t _b_size, double _eps);
+  execution_status init_block (size_t m_size, size_t b_size, double eps);
   bool square ();
 
   inline execution_status block_multiply (block &x, block &y);

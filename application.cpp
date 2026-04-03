@@ -22,7 +22,7 @@ application::init_application ()
   rv_storage.set_reflection_storage (matrix_p[1].get_arr ());
   for (size_t i = 0; i < 3; i++)
     {
-      status = blocks[i].init_block (b_size, 0);
+      status = blocks[i].init_block (m_size, b_size, 0);
       if (status != execution_status::success)
         return status;
     }
@@ -57,7 +57,7 @@ application::read_matrix ()
   if (process_index == 0)
     for (size_t b_row_index = 0; b_row_index < k; b_row_index++)
       {
-        
+
         size_t consumer_process_index = b_row_index % p;
 
         if (consumer_process_index == 0)
@@ -69,6 +69,8 @@ application::read_matrix ()
             if (has_error (status))
               {
                 status = execution_status::undefined_error;
+                // printf ("kaka\n");
+                fclose (fp);
                 return status;
               }
           }
@@ -101,6 +103,8 @@ application::read_matrix ()
         double *b_row = matrix_p[0].get_b_row_pointer (b_row_index / p);
         recv_message (0, size, b_row_index, b_row);
       }
+  if (process_index == 0)
+    fclose (fp);
   return execution_status::success;
 }
 
@@ -112,6 +116,8 @@ application::norm_calculate ()
   double *consumer = blocks[1].get_arr ();
   for (size_t i = 0; i < k; i++)
     {
+      blocks[0].zero_padding ();
+      blocks[1].zero_padding ();
       size_t size = matrix_p[0].calculate_norm_part (i, producer);
       reduce_sum_arr (producer, consumer, size);
       norm = std::max (norm, max_from_array (size, consumer));
@@ -147,6 +153,8 @@ application::print_matrix ()
         matrix_p[0].get_row_part (row_index, print_size, bufer);
         send_message (0, print_size, row_index, bufer);
       }
+  if (process_index == 0)
+    printf ("\n\n");
 }
 
 void
@@ -187,7 +195,7 @@ application::print_transpozition_matrix ()
               continue;
             matrix_p[0].get_col_part (col_index, b_row_index, bufer);
             size_t rb_size = matrix_p[0].get_bost_size (b_row_index);
-            send_message (source, rb_size, 0, bufer);
+            send_message (0, rb_size, col_index, bufer);
           }
       }
 }
@@ -246,4 +254,3 @@ application::cmd_arg_parsing (size_t argc, char *argv[])
     status = execution_status::cmd_parse_error;
   return status;
 }
-

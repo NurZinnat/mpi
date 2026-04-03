@@ -88,9 +88,7 @@ execution_status
 mpi_communicator::send_message (size_t index, size_t message_size, size_t tag,
                                 double *message)
 {
-  MPI_Isend (message, message_size, MPI_DOUBLE, int (index), int (tag), comm,
-             &send_request);
-  MPI_Wait (&send_request, MPI_STATUS_IGNORE);
+  MPI_Send (message, message_size, MPI_DOUBLE, int (index), int (tag), comm);
   return execution_status::success;
 }
 
@@ -100,7 +98,7 @@ mpi_communicator::recv_message (size_t index, size_t message_size, size_t tag,
 {
   if (!message)
     message = get_arr ();
-  MPI_Recv (&message, message_size, MPI_DOUBLE, index, tag, comm,
+  MPI_Recv (message, message_size, MPI_DOUBLE, index, tag, comm,
             &recv_request);
   return execution_status::success;
 }
