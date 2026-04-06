@@ -5,15 +5,16 @@
 #include "cmd_arg_parser.h"
 #include "matrix_part.h"
 #include "reflection_vectors.h"
+#define MATRIX matrix_p[0]
 
 class application : private m_sizes,
                     private mpi_communicator,
                     private cmd_arg_parser
 {
   matrix_part matrix_p[2];
-  block blocks[3];
+  block b;
+  block_view b_view[2];
   reflection_vectors rv{};
-  reflection_vectors_storage rv_storage{};
 
   execution_status status{};
   size_t print_size{};
@@ -26,6 +27,9 @@ class application : private m_sizes,
   size_t r{};
   size_t s{};
   char *file_name{};
+
+  std::unique_ptr<double[]> bufer_1{};
+  std::unique_ptr<double[]> bufer_2{};
 
 public:
   application () = default;
@@ -42,8 +46,21 @@ public:
   void print_transpozition_matrix ();
   void init_norm ();
   execution_status cmd_arg_parsing (size_t argc, char *argv[]);
-
   void application_main (size_t argc, char *argv[]);
+
+  void build_triangular_reflection (size_t local_r_index, size_t c_index);
+  void spread_triangular_reflection (size_t local_r_index, size_t c_start,
+                                     size_t c_end);
+  void build_reset_reflection (size_t local_r_index, size_t sub_local_r_index,
+                               size_t c_index);
+  void spread_reset_reflection (size_t local_r_index, size_t sub_local_r_index,
+                                size_t c_start, size_t c_end);
+  void triangulization ();
+  void triangulization_local_part (size_t step);
+  void triangulization_communicate_part (size_t step);
+
+  size_t calculate_global_b_row_index (size_t local_b_row_index);
+  size_t calculate_local_b_row_index (size_t global_b_row_index);
 };
 
 #endif // APPLICATION_H

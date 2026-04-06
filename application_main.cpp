@@ -19,6 +19,7 @@ application::application_main (size_t argc, char *argv[])
   print_matrix ();
 
   norm_calculate ();
+  
 
   print_transpozition_matrix ();
 }

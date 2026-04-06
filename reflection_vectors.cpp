@@ -1,5 +1,69 @@
 #include "reflection_vectors.h"
 
+void
+reflection_vectors::push (reflection_type rv_type, size_t r_index,
+                          size_t c_index)
+{
+  size_t k = get_k ();
+  size_t shift{};
+  if (rv_type == reflection_type::triangular)
+    {
+
+      if (c_index == k - 1)
+        shift = get_ost_triangular_rv_size ();
+      else
+        shift = get_triangular_rv_size ();
+    }
+  else
+    {
+      if (r_index == k - 1)
+        shift = get_ost_reset_rv_size ();
+      else
+        shift = get_reset_rv_size ();
+    }
+  shift_plus (shift);
+}
+
+void
+reflection_vectors::pop (reflection_type rv_type, size_t r_index,
+                         size_t c_index)
+{
+  size_t k = get_k ();
+  size_t shift{};
+  size_t b_size = get_b_size ();
+  size_t r = get_r ();
+  size_t vector_size{};
+  if (rv_type == reflection_type::triangular)
+    {
+
+      if (c_index == k - 1)
+        {
+          shift = get_ost_triangular_rv_size ();
+          vector_size = r;
+        }
+      else
+        {
+          shift = get_triangular_rv_size ();
+          vector_size = b_size;
+        }
+    }
+  else
+    {
+      if (r_index == k - 1)
+        {
+          shift = get_ost_reset_rv_size ();
+          vector_size = r + 1;
+        }
+      else
+        {
+          shift = get_reset_rv_size ();
+          vector_size = b_size + 1;
+        }
+    }
+  set_vector_size (vector_size);
+  shift_minus (shift);
+}
+
 reflection_vectors &
 reflection_vectors::operator= (const reflection_vectors &x)
 {
@@ -8,14 +72,15 @@ reflection_vectors::operator= (const reflection_vectors &x)
   set_vector_size (x.get_vector_size ());
   size_t stop = x.get_rv_size ();
   set_rv_size (stop);
-  double *arr = get_arr (), *x_arr = x.get_arr ();
+  double *arr = get_shift_arr (), *x_arr = x.get_arr ();
   for (size_t i = 0; i < stop; i++)
     arr[i] = x_arr[i];
   return *this;
 }
 
 execution_status
-reflection_vectors::init_reflection_vectors (size_t _b_size, double _eps)
+reflection_vectors::init_reflection_vectors (size_t m_size, size_t b_size,
+                                             double eps)
 {
   if (get_b_size () != 0)
     {
@@ -23,16 +88,15 @@ reflection_vectors::init_reflection_vectors (size_t _b_size, double _eps)
               "памяти\n");
       return execution_status::runtime_error;
     }
-  set_eps (_eps);
-  set_b_size (_b_size);
-  return static_cast<data *> (this)->data_memory_allocate ((_b_size + 1)
-                                                           * _b_size);
+  init_m_sizes (m_size, b_size);
+  set_eps (eps);
+  return execution_status::success;
 }
 
 void
 reflection_vectors::print (size_t size)
 {
-  double *arr = get_arr ();
+  double *arr = get_shift_arr ();
   printf ("v_size = %ld\n", get_vector_size ());
   printf ("rv_print______________________\n");
   for (size_t i = 0; i < size; i++)
@@ -44,7 +108,7 @@ reflection_vectors::print (size_t size)
 }
 
 execution_status
-reflection_vectors::build_triangular_reflection (block &b)
+reflection_vectors::build_triangular_reflection (block_view &b)
 {
   if (!b.square ())
     {
@@ -59,7 +123,7 @@ reflection_vectors::build_triangular_reflection (block &b)
       return execution_status::success;
     }
   double eps = get_eps ();
-  double *arr = get_arr (), *b_arr = b.get_arr ();
+  double *arr = get_shift_arr (), *b_arr = b.get_arr ();
   size_t vec_num = 0;
 
   double *str0 = b_arr;
@@ -183,12 +247,12 @@ reflection_vectors::build_triangular_reflection (block &b)
   return execution_status::success;
 }
 execution_status
-reflection_vectors::spread_triangular_reflection_and_ref (block &b)
+reflection_vectors::spread_triangular_reflection_and_ref (block_view &b)
 {
   double *bl_arr = b.get_arr ();
   size_t r_n = b.get_r_num ();
   size_t c_n = b.get_c_num ();
-  double *arr = get_arr ();
+  double *arr = get_shift_arr ();
 
   if (r_n == 1)
     return execution_status::success;
@@ -326,12 +390,12 @@ reflection_vectors::spread_triangular_reflection_and_ref (block &b)
   return execution_status::success;
 }
 execution_status
-reflection_vectors::spread_triangular_reflection (block &b)
+reflection_vectors::spread_triangular_reflection (block_view &b)
 {
   double *b_arr = b.get_arr ();
   size_t r_n = b.get_r_num ();
   size_t c_n = b.get_c_num ();
-  double *arr = get_arr ();
+  double *arr = get_shift_arr ();
 
   if (c_n == 1)
     return execution_status::success;
@@ -427,7 +491,8 @@ reflection_vectors::spread_triangular_reflection (block &b)
   return execution_status::success;
 }
 execution_status
-reflection_vectors::build_reset_reflection_and_ref (block &b, block &di_b)
+reflection_vectors::build_reset_reflection_and_ref (block_view &b,
+                                                    block_view &di_b)
 {
   double eps = get_eps ();
   if (!di_b.square ())
@@ -456,7 +521,7 @@ reflection_vectors::build_reset_reflection_and_ref (block &b, block &di_b)
   set_vector_size (r_n + 1);
   double *b_arr = b.get_arr ();
   double *di_b_arr = di_b.get_arr ();
-  double *arr = get_arr ();
+  double *arr = get_shift_arr ();
   size_t index = 0;
 
   double sum = 0;
@@ -734,7 +799,7 @@ reflection_vectors::build_reset_reflection_and_ref (block &b, block &di_b)
 }
 
 execution_status
-reflection_vectors::build_reset_reflection (block &b, block &di_b)
+reflection_vectors::build_reset_reflection (block_view &b, block_view &di_b)
 {
   double eps = get_eps ();
   if (!di_b.square ())
@@ -762,7 +827,7 @@ reflection_vectors::build_reset_reflection (block &b, block &di_b)
     }
   double *b_arr = b.get_arr ();
   double *di_b_arr = di_b.get_arr ();
-  double *arr = get_arr ();
+  double *arr = get_shift_arr ();
   size_t v_num{};
   set_vector_size (c_n + 1);
   double *str = b_arr;
@@ -863,12 +928,13 @@ reflection_vectors::build_reset_reflection (block &b, block &di_b)
   return execution_status::success;
 }
 execution_status
-reflection_vectors::spread_reset_reflection_and_ref (block &bl, block &di_bl)
+reflection_vectors::spread_reset_reflection_and_ref (block_view &bl,
+                                                     block_view &di_bl)
 {
   size_t c_n = bl.get_c_num ();
   size_t vec_size = get_vector_size ();
 
-  double *arr = get_arr (), *bl_arr = bl.get_arr (),
+  double *arr = get_shift_arr (), *bl_arr = bl.get_arr (),
          *di_bl_arr = di_bl.get_arr ();
 
   size_t reflection_number = get_b_size ();
@@ -938,12 +1004,12 @@ reflection_vectors::spread_reset_reflection_and_ref (block &bl, block &di_bl)
 }
 
 execution_status
-reflection_vectors::spread_reset_reflection (block &bl, block &di_bl)
+reflection_vectors::spread_reset_reflection (block_view &bl, block_view &di_bl)
 {
   size_t r_n = bl.get_r_num ();
   size_t c_n = bl.get_c_num ();
 
-  double *arr = get_arr ();
+  double *arr = get_shift_arr ();
   double *b_arr = bl.get_arr ();
   double *di_b_arr = di_bl.get_arr ();
 
@@ -1053,13 +1119,13 @@ reflection_vectors::spread_reset_reflection (block &bl, block &di_bl)
 }
 
 execution_status
-reflection_vectors::spread_transposition_triangular_reflection (block &b)
+reflection_vectors::spread_transposition_triangular_reflection (block_view &b)
 {
   // b.print ();
   double *b_arr = b.get_arr ();
   size_t r_n = b.get_r_num ();
   size_t c_n = b.get_c_num ();
-  double *arr = get_arr ();
+  double *arr = get_shift_arr ();
 
   if (c_n == 1)
     return execution_status::success;
@@ -1181,9 +1247,10 @@ reflection_vectors::spread_transposition_triangular_reflection (block &b)
   return execution_status::success;
 }
 // execution_status
-// reflection_vectors::spread_transposition_triangular_reflection (block &b)
+// reflection_vectors::spread_transposition_triangular_reflection (block_view
+// &b)
 // {
-//   double *arr = get_arr (), *b_arr = b.get_arr ();
+//   double *arr = get_shift_arr (), *b_arr = b.get_arr ();
 //   size_t r_num = b.get_r_num ();
 //   size_t c_num = b.get_c_num ();
 //   size_t size = (r_num + 2) * (r_num - 1) / 2;
@@ -1298,15 +1365,15 @@ reflection_vectors::spread_transposition_triangular_reflection (block &b)
 // }
 
 execution_status
-reflection_vectors::spread_transposition_reset_reflection (block &bl,
-                                                           block &di_bl)
+reflection_vectors::spread_transposition_reset_reflection (block_view &bl,
+                                                           block_view &di_bl)
 {
   size_t r_n = bl.get_r_num ();
   size_t c_n = bl.get_c_num ();
 
   set_vector_size (c_n + 1);
 
-  double *arr = get_arr ();
+  double *arr = get_shift_arr ();
   double *b_arr = bl.get_arr ();
   double *di_b_arr = di_bl.get_arr ();
 
@@ -1423,7 +1490,7 @@ reflection_vectors::spread_transposition_reset_reflection (block &bl,
 void
 reflection_vectors::copy_triangular_reflection (reflection_vectors &x)
 {
-  double *arr = get_arr ();
+  double *arr = get_shift_arr ();
   double *x_arr = x.get_arr ();
   size_t v_size = x.get_vector_size ();
   set_vector_size (v_size);
@@ -1435,7 +1502,7 @@ reflection_vectors::copy_triangular_reflection (reflection_vectors &x)
 void
 reflection_vectors::copy_reset_reflection (reflection_vectors &x)
 {
-  double *arr = get_arr ();
+  double *arr = get_shift_arr ();
   double *x_arr = x.get_arr ();
   size_t v_size = x.get_vector_size ();
   set_vector_size (v_size);

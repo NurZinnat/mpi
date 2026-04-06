@@ -19,14 +19,20 @@ application::init_application ()
       if (status != execution_status::success)
         return status;
     }
-  rv_storage.set_reflection_storage (matrix_p[1].get_arr ());
-  for (size_t i = 0; i < 3; i++)
-    {
-      status = blocks[i].init_block (m_size, b_size, 0);
-      if (status != execution_status::success)
-        return status;
-    }
-  status = rv.init_reflection_vectors (b_size, 0);
+  rv.set_arr (matrix_p[1].get_arr ());
+
+  status = b.init_block (m_size, b_size, 0);
+  if (status != execution_status::success)
+    return status;
+
+  for (size_t i = 0; i < 2; i++)
+    b_view[i].init_block_view (m_size, b_size);
+
+  status = rv.init_reflection_vectors (m_size, b_size, 0);
+  if (status != execution_status::success)
+    return status;
+  bufer_1 = std::make_unique<double[]> (b_size);
+  bufer_2 = std::make_unique<double[]> (b_size);
   return status;
 }
 
@@ -35,7 +41,7 @@ application::read_matrix ()
 {
   if (s > 0)
     {
-      matrix_p[0].init_by_formula (s);
+      MATRIX.init_by_formula (s);
       return execution_status::success;
     }
   size_t m_size = get_m_size ();
@@ -62,10 +68,10 @@ application::read_matrix ()
 
         if (consumer_process_index == 0)
           {
-            double *bufer = matrix_p[0].get_b_row_pointer (b_row_index / p);
+            double *bufer = MATRIX.get_b_row_pointer (b_row_index / p);
             size_t size{};
-            status = matrix_p[0].read_b_row_from_file_to_arr (b_row_index,
-                                                              size, bufer, fp);
+            status = MATRIX.read_b_row_from_file_to_arr (b_row_index, size,
+                                                         bufer, fp);
             if (has_error (status))
               {
                 status = execution_status::undefined_error;
@@ -78,8 +84,8 @@ application::read_matrix ()
           {
             double *message = get_bufer ();
             size_t size{};
-            status = matrix_p[0].read_b_row_from_file_to_arr (
-                b_row_index, size, message, fp);
+            status = MATRIX.read_b_row_from_file_to_arr (b_row_index, size,
+                                                         message, fp);
             if (has_error (status))
               {
                 status = execution_status::undefined_error;
@@ -98,9 +104,9 @@ application::read_matrix ()
           }
         if (b_row_index % p != process_index)
           continue;
-        size_t rb_size = matrix_p[0].get_bost_size (b_row_index);
+        size_t rb_size = MATRIX.get_bost_size (b_row_index);
         size_t size = rb_size * m_size;
-        double *b_row = matrix_p[0].get_b_row_pointer (b_row_index / p);
+        double *b_row = MATRIX.get_b_row_pointer (b_row_index / p);
         recv_message (0, size, b_row_index, b_row);
       }
   if (process_index == 0)
@@ -112,13 +118,11 @@ void
 application::norm_calculate ()
 {
   size_t k = get_k ();
-  double *producer = blocks[0].get_arr ();
-  double *consumer = blocks[1].get_arr ();
+  double *producer = bufer_1.get ();
+  double *consumer = bufer_2.get ();
   for (size_t i = 0; i < k; i++)
     {
-      blocks[0].zero_padding ();
-      blocks[1].zero_padding ();
-      size_t size = matrix_p[0].calculate_norm_part (i, producer);
+      size_t size = MATRIX.calculate_norm_part (i, producer);
       reduce_sum_arr (producer, consumer, size);
       norm = std::max (norm, max_from_array (size, consumer));
     }
@@ -137,7 +141,7 @@ application::print_matrix ()
         size_t source = global_b_row_index % p;
         double *print_arr = get_bufer ();
         if (source == 0)
-          matrix_p[0].get_row_part (row_index, print_size, print_arr);
+          MATRIX.get_row_part (row_index, print_size, print_arr);
         else
           recv_message (source, print_size, row_index);
         print_array (print_size, print_arr);
@@ -150,7 +154,7 @@ application::print_matrix ()
         if (source != process_index)
           continue;
         double *bufer = get_bufer ();
-        matrix_p[0].get_row_part (row_index, print_size, bufer);
+        MATRIX.get_row_part (row_index, print_size, bufer);
         send_message (0, print_size, row_index, bufer);
       }
   if (process_index == 0)
@@ -173,10 +177,10 @@ application::print_transpozition_matrix ()
           {
             size_t source = b_row_index % p;
             if (source == 0)
-              matrix_p[0].get_col_part (col_index, b_row_index, buf_arr);
+              MATRIX.get_col_part (col_index, b_row_index, buf_arr);
             else
               {
-                size_t rb_size = matrix_p[0].get_bost_size (b_row_index);
+                size_t rb_size = MATRIX.get_bost_size (b_row_index);
                 recv_message (source, rb_size, col_index, buf_arr);
               }
             buf_arr += b_size;
@@ -193,8 +197,8 @@ application::print_transpozition_matrix ()
             size_t source = b_row_index % p;
             if (source != process_index)
               continue;
-            matrix_p[0].get_col_part (col_index, b_row_index, bufer);
-            size_t rb_size = matrix_p[0].get_bost_size (b_row_index);
+            MATRIX.get_col_part (col_index, b_row_index, bufer);
+            size_t rb_size = MATRIX.get_bost_size (b_row_index);
             send_message (0, rb_size, col_index, bufer);
           }
       }
@@ -205,15 +209,14 @@ application::init_norm ()
 {
   for (size_t i = 0; i < 2; i++)
     matrix_p[i].set_norm (norm);
-  for (size_t i = 0; i < 3; i++)
-    blocks[i].set_eps (norm);
+  b.set_eps (norm);
   rv.set_eps (norm);
 }
 
 execution_status
 application::cmd_arg_parsing (size_t argc, char *argv[])
 {
-  default_init_mpi_communicator ();
+  init_mpi_communicator (MPI_COMM_WORLD, 0);
   if (argc < 5 || argc > 6)
     {
       status = execution_status::cmd_parse_error;
@@ -253,4 +256,56 @@ application::cmd_arg_parsing (size_t argc, char *argv[])
   if (m_size == 0 || b_size == 0 || s > 4)
     status = execution_status::cmd_parse_error;
   return status;
+}
+
+void
+application::build_triangular_reflection (size_t local_r_index, size_t c_index)
+{
+  MATRIX.get_block_view (b_view[0], local_r_index, c_index);
+  rv.build_triangular_reflection (b_view[0]);
+}
+
+void
+application::spread_triangular_reflection (size_t local_r_index,
+                                           size_t c_start, size_t c_end)
+{
+  for (size_t c_index = c_start; c_index < c_end; c_index++)
+    {
+      MATRIX.get_block_view (b_view[0], local_r_index, c_index);
+      rv.spread_triangular_reflection (b_view[0]);
+    }
+}
+
+void
+application::build_reset_reflection (size_t local_r_index,
+                                     size_t sub_local_r_index, size_t c_index)
+{
+  MATRIX.get_block_view (b_view[0], local_r_index, c_index);
+  MATRIX.get_block_view (b_view[1], sub_local_r_index, c_index);
+  rv.build_reset_reflection (b_view[0], b_view[1]);
+}
+
+void
+application::spread_reset_reflection (size_t local_r_index,
+                                      size_t sub_local_r_index, size_t c_start,
+                                      size_t c_end)
+{
+  for (size_t c_index = c_start; c_index < c_end; c_index++)
+    {
+      MATRIX.get_block_view (b_view[0], local_r_index, c_index);
+      MATRIX.get_block_view (b_view[1], sub_local_r_index, c_index);
+      rv.spread_reset_reflection (b_view[0], b_view[1]);
+    }
+}
+
+size_t
+application::calculate_global_b_row_index (size_t local_b_row_index)
+{
+  return get_process_index () + get_active_process () * local_b_row_index;
+}
+
+size_t
+application::calculate_local_b_row_index (size_t global_b_row_index)
+{
+  return global_b_row_index / get_active_process ();
 }

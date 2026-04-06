@@ -1,45 +1,4 @@
 #include "block.h"
-
-// gets::
-
-size_t
-block::get_r_num () const
-{
-  return r_num;
-}
-
-size_t
-block::get_c_num () const
-{
-  return c_num;
-}
-matrix_type
-block::get_m_type ()
-{
-  return m_type;
-}
-// gets_end
-
-// sets::
-
-void
-block::set_r_num (size_t _r_num)
-{
-  r_num = _r_num;
-}
-
-void
-block::set_c_num (size_t _c_num)
-{
-  c_num = _c_num;
-}
-void
-block::set_m_type (matrix_type _m_type)
-{
-  m_type = _m_type;
-}
-// sets_end
-
 void
 block::print ()
 {
@@ -108,7 +67,7 @@ execution_status
 block::init_block (size_t m_size, size_t b_size, double eps)
 {
   r_num = c_num = b_size;
-  init_m_sizes(m_size, b_size);
+  init_m_sizes (m_size, b_size);
   set_eps (eps);
   execution_status status
       = static_cast<data *> (this)->data_memory_allocate (b_size * b_size);
@@ -126,15 +85,9 @@ block::square ()
 }
 
 execution_status
-block::inverse_triangular_upper (block &x)
+block::inverse_triangular_upper (block_view &x)
 {
   double eps = get_eps ();
-  if (&x == this)
-    {
-      printf ("block::inverse_upper_triangular:: исходный и результирующий "
-              "блоки совпадают\n");
-      return execution_status::inval_arg;
-    }
   if (get_arr_size () < x.get_arr_size ())
     {
       printf ("block::inverse_upper_triangular:: результирующий блок меньше "
