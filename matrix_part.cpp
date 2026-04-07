@@ -57,9 +57,6 @@ matrix_part::copy_b_str (size_t str_index, double *arr)
   array_copy (size, part_arr, arr);
 }
 
-
-
-
 execution_status
 matrix_part::get_row_part (size_t row_index, size_t row_size, double *row)
 {
@@ -155,8 +152,7 @@ matrix_part::set_norm (double val)
 }
 
 void
-matrix_part::get_block_view (block_view &b, size_t local_r_index,
-                             size_t c_index)
+matrix_part::get_block (block_view &b, size_t local_r_index, size_t c_index)
 {
   size_t m_size = get_m_size ();
   size_t b_size = get_b_size ();
@@ -171,7 +167,7 @@ matrix_part::get_block_view (block_view &b, size_t local_r_index,
 }
 
 void
-matrix_part::set_block (block &b, size_t local_r_index, size_t c_index)
+matrix_part::set_block (block_view &b, size_t local_r_index, size_t c_index)
 {
   double *arr = get_arr () + get_ordinary_b_str_size () * local_r_index;
   size_t b_size = get_b_size ();
@@ -183,4 +179,16 @@ matrix_part::set_block (block &b, size_t local_r_index, size_t c_index)
   b.set_c_num (cb_size);
   size_t size = rb_size * cb_size;
   array_copy (size, arr, b_arr);
+}
+
+void
+matrix_part::get_b_str (block_string &str, size_t local_index, size_t start,
+                        size_t end)
+{
+  size_t k = get_k ();
+  size_t b_size = get_b_size ();
+  size_t m_size = get_m_size ();
+  size_t r_num = get_local_bost_size (local_index);
+  double *arr = get_arr () + b_size * m_size;
+  str.set_params (start, end, r_num, arr);
 }

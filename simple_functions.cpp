@@ -26,3 +26,10 @@ print_array (size_t size, double *arr)
     printf ("%10.3e ", arr[i]);
   printf ("\n");
 }
+
+void
+array_add_to_first (size_t size, double *res_arr, double *arr)
+{
+  for (size_t i = 0; i < size; i++)
+    res_arr[i] += arr[i];
+}

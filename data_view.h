@@ -11,7 +11,8 @@ public:
   ~data_view () = default;
   data_view (const data_view &x) = delete;
   data_view (data_view &&x) = delete;
-  data_view &operator= (const data_view &x) = delete;
+  data_view &operator= (const data_view &x);
+  data_view &operator+= (const data_view &x);
   data_view &operator= (data_view &&x) = delete;
 
   double *get_arr () const;

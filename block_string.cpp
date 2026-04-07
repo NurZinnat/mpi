@@ -1,16 +1,17 @@
 #include "block_string.h"
+#include "simple_functions.h"
 
 // Геттеры для ВСЕХ полей
 size_t
-block_string::get_local_b_r_index () const
+block_string::get_local_index () const
 {
-  return local_b_r_index;
+  return local_index;
 }
 
 size_t
-block_string::get_global_b_r_index () const
+block_string::get_global_index () const
 {
-  return global_b_r_index;
+  return global_index;
 }
 
 size_t
@@ -20,28 +21,28 @@ block_string::get_start_r_index () const
 }
 
 size_t
-block_string::get_r_size () const
+block_string::get_r_num () const
 {
-  return r_size;
+  return r_num;
 }
 
 size_t
-block_string::get_shift () const
+block_string::get_str_size () const
 {
-  return shift;
+  return str_size;
 }
 
 // Сеттеры для ВСЕХ полей
 void
 block_string::set_local_b_r_index (size_t value)
 {
-  local_b_r_index = value;
+  local_index = value;
 }
 
 void
 block_string::set_global_b_r_index (size_t value)
 {
-  global_b_r_index = value;
+  global_index = value;
 }
 
 void
@@ -51,17 +52,16 @@ block_string::set_start_r_index (size_t value)
 }
 
 void
-block_string::set_r_size (size_t value)
+block_string::set_r_num (size_t value)
 {
-  r_size = value;
+  r_num = value;
 }
 
 void
-block_string::set_shift (size_t value)
+block_string::set_str_size (size_t value)
 {
-  shift = value;
+  str_size = value;
 }
-
 // Остальные методы
 void
 block_string::init_block_string (size_t m_size, size_t b_size, double *arr,
@@ -70,14 +70,15 @@ block_string::init_block_string (size_t m_size, size_t b_size, double *arr,
   init_m_sizes (m_size, b_size);
   set_arr (arr);
   set_arr_size (m_size * b_size);
-  local_b_r_index = _local_index;
-  global_b_r_index = _global_index;
-  r_size = (global_b_r_index == (get_k () - 1) && get_r () != 0)
-               ? get_r ()
-               : get_b_size ();
-  shift = m_size * b_size * local_b_r_index;
-  bxb_size = r_size * b_size;
-  ost_bxb_size = r_size * get_r ();
+  local_index = _local_index;
+  global_index = _global_index;
+  r_num = (global_index == (get_k () - 1) && get_r () != 0) ? get_r ()
+                                                            : get_b_size ();
+
+  ost = b_size;
+  size_t r = get_r ();
+  if (r)
+    ost = r;
 }
 
 void
@@ -85,13 +86,36 @@ block_string::get_block (block_view &b, size_t c_b_index)
 {
   size_t k = get_k ();
   size_t b_size = get_b_size ();
-  b.set_arr (get_arr () + bxb_size * c_b_index);
-  b.set_c_num (r_size);
+  b.set_arr (get_arr () + r_num * b_size * c_b_index);
+  b.set_c_num (r_num);
   b.set_r_num (c_b_index == k - 1 ? get_r () : b_size);
   if (c_b_index == k - 1)
-    b.set_arr_size (ost_bxb_size);
+    b.set_arr_size (ost * r_num);
   else
-    b.set_arr_size (bxb_size);
+    b.set_arr_size (b_size * r_num);
+}
+
+void
+block_string::set_block (block_view &b, size_t c_b_index)
+{
+  size_t k = get_k ();
+  double *arr = get_arr ();
+  size_t b_size = get_b_size ();
+  arr += r_num * b_size * c_b_index;
+  double *b_arr = b.get_arr ();
+  b.set_r_num (r_num);
+  size_t size{};
+  if (c_b_index == k - 1)
+    {
+      b.set_c_num (ost);
+      size = r_num * ost;
+    }
+  else
+    {
+      b.set_c_num (b_size);
+      size = r_num * b_size;
+    }
+  array_copy (size, arr, b_arr);
 }
 
 double
@@ -130,9 +154,9 @@ block_string::init_by_formula (size_t s)
   double *arr = get_arr ();
   size_t arr_index = 0;
   size_t r_start = 0;
-  size_t r_end = r_start + get_bost_size (global_b_r_index);
-  r_start = b_size * global_b_r_index;
-  r_end = r_start + get_bost_size (global_b_r_index);
+  size_t r_end = r_start + get_bost_size (global_index);
+  r_start = b_size * global_index;
+  r_end = r_start + get_bost_size (global_index);
   size_t c_start = 0;
   for (size_t global_b_c_index = 0; global_b_c_index < k; global_b_c_index++)
     {
@@ -152,7 +176,7 @@ block_string::read_b_row_from_file_to_arr (FILE *fp)
   size_t m_size = get_m_size ();
   size_t b_size = get_b_size ();
   size_t k = get_k ();
-  size_t rb_size = get_bost_size (global_b_r_index);
+  size_t rb_size = get_bost_size (global_index);
   size_t step = rb_size * b_size;
   double *arr = get_arr ();
   for (size_t i = 0; i < rb_size; i++)
@@ -169,4 +193,19 @@ block_string::read_b_row_from_file_to_arr (FILE *fp)
       arr++;
     }
   return execution_status::success;
+}
+
+void
+block_string::set_params (size_t start, size_t end, size_t _r_num,
+                          double *_arr)
+{
+  size_t b_size = get_b_size ();
+  size_t k = get_k ();
+  size_t r = get_r ();
+  r_num = _r_num;
+  set_arr (_arr + b_size * r_num * start);
+  ost = b_size;
+  if (end == k && r)
+    ost = r;
+  set_arr_size (r_num * b_size * (str_size - 1) + r_num * ost);
 }

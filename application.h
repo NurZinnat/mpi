@@ -5,15 +5,14 @@
 #include "cmd_arg_parser.h"
 #include "matrix_part.h"
 #include "reflection_vectors.h"
-#define MATRIX matrix_p[0]
 
 class application : private m_sizes,
                     private mpi_communicator,
                     private cmd_arg_parser
 {
-  matrix_part matrix_p[2];
-  block b;
-  block_view b_view[2];
+  matrix_part matrix{};
+  matrix_part sub_matrix{};
+  block_view blocks[3];
   reflection_vectors rv{};
 
   execution_status status{};

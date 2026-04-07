@@ -1,5 +1,5 @@
 #include "reflection_vectors.h"
-
+#include "block_string.h"
 void
 reflection_vectors::push (reflection_type rv_type, size_t r_index,
                           size_t c_index)
@@ -1138,14 +1138,6 @@ reflection_vectors::spread_transposition_triangular_reflection (block_view &b)
   size_t vec_size = 2;
   size_t len = (c_n + 2) * (c_n - 1) / 2 - 2;
   double *last_vector = arr + len;
-  // size_t b_size = get_b_size ();
-  // printf ("\n\n\n\n_________________________________________\n");
-  // print (b_size * (b_size + 1));
-  // printf ("_ _ _ _ _ _ _ _ _ _ _ _ _\n");
-  // size_t len = (c_n + 2) * (c_n - 1) / 2;
-  // printf ("len = %ld\n", len);
-  // print (len);
-  // printf ("_________________________________________\n\n\n\n\n");
 
   for (; row + 2 <= r_n; row += 2)
     {
@@ -1246,123 +1238,6 @@ reflection_vectors::spread_transposition_triangular_reflection (block_view &b)
 
   return execution_status::success;
 }
-// execution_status
-// reflection_vectors::spread_transposition_triangular_reflection (block_view
-// &b)
-// {
-//   double *arr = get_shift_arr (), *b_arr = b.get_arr ();
-//   size_t r_num = b.get_r_num ();
-//   size_t c_num = b.get_c_num ();
-//   size_t size = (r_num + 2) * (r_num - 1) / 2;
-//   if (r_num == 1)
-//     return execution_status::success;
-//   for (size_t c_pair = 0; c_pair + 1 < c_num; c_pair += 2)
-//     {
-//       size_t vec_index = size;
-//       size_t v_size = 2;
-//       double sum0 = 0.0, sum1 = 0.0;
-//       vec_index -= v_size;
-//       double *vec = arr + vec_index;
-//       size_t index0 = (r_num - v_size) * c_num + c_pair;
-//       size_t index1 = index0 + 1;
-//       for (size_t u = 0; u < v_size; u++)
-//         {
-//           sum0 += b_arr[index0] * vec[u];
-//           sum1 += b_arr[index1] * vec[u];
-//           index0 += c_num;
-//           index1 += c_num;
-//         }
-
-//       v_size++;
-//       for (; v_size <= r_num; v_size++)
-//         {
-
-//           vec_index -= v_size;
-//           double *sub_vec = arr + vec_index;
-//           double sub_sum0 = 0.0, sub_sum1 = 0.0;
-//           index0 = (r_num - v_size) * c_num + c_pair;
-//           index1 = index0 + 1;
-
-//           sub_sum0 += b_arr[index0] * sub_vec[0];
-//           sub_sum1 += b_arr[index1] * sub_vec[0];
-
-//           index0 += c_num;
-//           index1 += c_num;
-//           for (size_t u = 1; u < v_size; u++)
-//             {
-
-//               b_arr[index0] -= 2 * sum0 * vec[u - 1];
-//               b_arr[index1] -= 2 * sum1 * vec[u - 1];
-//               // if (c_pair == 2)
-//               //   {
-//               //     if (u == 2)
-//               //       return execution_status::success;
-//               //   }
-
-//               sub_sum0 += b_arr[index0] * sub_vec[u];
-//               sub_sum1 += b_arr[index1] * sub_vec[u];
-
-//               index0 += c_num;
-//               index1 += c_num;
-//             }
-//           vec = sub_vec;
-//           sum0 = sub_sum0;
-//           sum1 = sub_sum1;
-//         }
-//       v_size--;
-//       index0 = c_pair;
-//       index1 = index0 + 1;
-//       for (size_t u = 0; u < v_size; u++)
-//         {
-//           b_arr[index0] -= 2 * sum0 * vec[u];
-//           b_arr[index1] -= 2 * sum1 * vec[u];
-
-//           index0 += c_num;
-//           index1 += c_num;
-//         }
-//     }
-//   if (!(c_num % 2))
-//     return execution_status::success;
-//   size_t vec_index = size;
-//   size_t v_size = 2;
-//   size_t c_pair = c_num - 1;
-//   double sum0 = 0.0;
-//   vec_index -= v_size;
-//   double *vec = arr + vec_index;
-//   size_t index0 = (r_num - v_size) * c_num + c_pair;
-//   for (size_t u = 0; u < v_size; u++)
-//     {
-//       sum0 += b_arr[index0] * vec[u];
-//       index0 += c_num;
-//     }
-//   v_size++;
-//   for (; v_size <= r_num; v_size++)
-//     {
-//       vec_index -= v_size;
-//       double *sub_vec = arr + vec_index;
-//       double sub_sum0 = 0.0;
-//       index0 = (r_num - v_size) * c_num + c_pair;
-//       sub_sum0 += b_arr[index0] * sub_vec[0];
-//       index0 += c_num;
-//       for (size_t u = 1; u < v_size; u++)
-//         {
-//           b_arr[index0] -= 2 * sum0 * vec[u - 1];
-//           sub_sum0 += b_arr[index0] * sub_vec[u];
-//           index0 += c_num;
-//         }
-//       vec = sub_vec;
-//       sum0 = sub_sum0;
-//     }
-//   v_size--;
-//   index0 = c_pair;
-//   for (size_t u = 0; u < v_size; u++)
-//     {
-//       b_arr[index0] -= 2 * sum0 * vec[u];
-//       index0 += c_num;
-//     }
-
-//   return execution_status::success;
-// }
 
 execution_status
 reflection_vectors::spread_transposition_reset_reflection (block_view &bl,
@@ -1510,4 +1385,30 @@ reflection_vectors::copy_reset_reflection (reflection_vectors &x)
   size_t size = v_size * b_size;
   for (size_t i = 0; i < size; i++)
     arr[i] = x_arr[i];
+}
+
+void
+reflection_vectors::spread_triangular_reflection (block_string &str,
+                                                  block_view *blocks,
+                                                  size_t c_start, size_t c_end)
+{
+  for (size_t c_index = c_start; c_index < c_end; c_index++)
+    {
+      str.get_block (blocks[0], c_index);
+      spread_triangular_reflection (blocks[0]);
+    }
+}
+
+void
+reflection_vectors::spread_reset_reflection (block_string &str,
+                                             block_string &sub_str,
+                                             block_view *blocks,
+                                             size_t c_start, size_t c_end)
+{
+  for (size_t c_index = c_start; c_index < c_end; c_index++)
+    {
+      str.get_block (blocks[0], c_index);
+      sub_str.get_block (blocks[1], c_index);
+      spread_reset_reflection (blocks[0], blocks[1]);
+    }
 }
