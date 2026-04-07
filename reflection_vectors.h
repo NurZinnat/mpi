@@ -38,11 +38,11 @@ public:
   execution_status build_reset_reflection_and_ref (block_view &b,
                                                    block_view &di_b);
 
-  execution_status spread_reset_reflection (block_view &bl, block_view &di_bl);
-  execution_status spread_reset_reflection_and_ref (block_view &bl,
-                                                    block_view &di_bl);
-  execution_status spread_transposition_reset_reflection (block_view &bl,
-                                                          block_view &di_bl);
+  execution_status spread_reset_reflection (block_view &di_bl, block_view &bl);
+  execution_status spread_reset_reflection_and_ref (block_view &di_bl,
+                                                    block_view &bl);
+  execution_status spread_transposition_reset_reflection (block_view &di_bl,
+                                                          block_view &bl);
 
   void print (size_t size);
 
@@ -50,12 +50,14 @@ public:
   void copy_reset_reflection (reflection_vectors &x);
   void push (reflection_type rv_type, size_t r_index, size_t c_index);
   void pop (reflection_type rv_type, size_t r_index, size_t c_index);
+  size_t get_size (reflection_type rv_type, size_t r_index, size_t c_index);
 
   void spread_triangular_reflection (block_string &str, block_view *blocks,
                                      size_t c_start, size_t c_end);
-  void spread_reset_reflection (block_string &str,
-                                block_string &sub_str, block_view *blocks, size_t c_start,
+  void spread_reset_reflection (block_string &sub_str,
+                                block_string &str, block_view *blocks, size_t c_start,
                                 size_t c_end);
+  
 };
 
 #endif // REFLECTION_VECTORS_H

@@ -5,13 +5,25 @@ execution_status
 application::init_application ()
 {
   init_m_sizes (m_size, b_size);
-  init_mpi_communicator (get_k (), m_size * b_size);
+  MPI_Comm world = MPI_COMM_WORLD;
+  init_mpi_group (world, 0);
+  size_t k = get_k ();
+  size_t process_index = get_process_index ();
+  int color = 0;
+  if (process_index >= k)
+    color = MPI_UNDEFINED;
+  split (color);
   if (inactive ())
     {
       status = execution_status::inactive_process;
       return status;
     }
-  print_size = r;
+  status = data_memory_allocate (m_size * b_size + b_size * b_size);
+  if (status != execution_status::success)
+    return status;
+  status = group.init_group_view (get_comm (), get_active_process ());
+  if (status != execution_status::success)
+    return status;
 
   status = matrix.init_matrix_part (m_size, b_size, get_process_index (),
                                     get_active_process ());
@@ -29,6 +41,7 @@ application::init_application ()
   status = rv.init_reflection_vectors (m_size, b_size, 0);
   if (status != execution_status::success)
     return status;
+  print_size = r;
   bufer_1 = std::make_unique<double[]> (b_size);
   bufer_2 = std::make_unique<double[]> (b_size);
   return status;
@@ -141,7 +154,7 @@ application::print_matrix ()
         if (source == 0)
           matrix.get_row_part (row_index, print_size, print_arr);
         else
-          recv_message (source, print_size, row_index);
+          recv_message (source, print_size, row_index, print_arr);
         print_array (print_size, print_arr);
       }
   else
@@ -214,7 +227,6 @@ application::init_norm ()
 execution_status
 application::cmd_arg_parsing (size_t argc, char *argv[])
 {
-  init_mpi_communicator (MPI_COMM_WORLD, 0);
   if (argc < 5 || argc > 6)
     {
       status = execution_status::cmd_parse_error;
@@ -275,23 +287,23 @@ application::spread_triangular_reflection (size_t local_r_index,
 }
 
 void
-application::build_reset_reflection (size_t local_r_index,
-                                     size_t sub_local_r_index, size_t c_index)
+application::build_reset_reflection (size_t sub_local_r_index,
+                                     size_t local_r_index, size_t c_index)
 {
-  matrix.get_block (blocks[0], local_r_index, c_index);
-  matrix.get_block (blocks[1], sub_local_r_index, c_index);
+  matrix.get_block (blocks[0], sub_local_r_index, c_index);
+  matrix.get_block (blocks[1], local_r_index, c_index);
   rv.build_reset_reflection (blocks[0], blocks[1]);
 }
 
 void
-application::spread_reset_reflection (size_t local_r_index,
-                                      size_t sub_local_r_index, size_t c_start,
+application::spread_reset_reflection (size_t sub_local_r_index,
+                                      size_t local_r_index, size_t c_start,
                                       size_t c_end)
 {
   for (size_t c_index = c_start; c_index < c_end; c_index++)
     {
-      matrix.get_block (blocks[0], local_r_index, c_index);
-      matrix.get_block (blocks[1], sub_local_r_index, c_index);
+      matrix.get_block (blocks[0], sub_local_r_index, c_index);
+      matrix.get_block (blocks[1], local_r_index, c_index);
       rv.spread_reset_reflection (blocks[0], blocks[1]);
     }
 }
@@ -306,4 +318,21 @@ size_t
 application::calculate_local_b_row_index (size_t global_b_row_index)
 {
   return global_b_row_index / get_active_process ();
+}
+
+double *
+application::get_bufer ()
+{
+  return get_arr ();
+}
+
+void
+application::find_diapazon (size_t len, size_t p, size_t index, size_t shift)
+{
+  size_t ttt = len / p;
+  size_t ost = len % p;
+  start = ttt * index + ((index < ost) ? index : ost);
+  end = start + ttt + ((index < ost) ? 1 : 0);
+  start += shift;
+  end += shift;
 }

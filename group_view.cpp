@@ -1,5 +1,11 @@
 #include "group_view.h"
 
+execution_status
+group_view::init_group_view (MPI_Comm &_comm, size_t p)
+{
+  comm = _comm;
+  index_map = std::make_unique<size_t[]> (p);
+}
 size_t
 group_view::get_group_id ()
 {
@@ -13,9 +19,9 @@ group_view::get_group_size ()
 }
 
 size_t
-group_view::get_process_index ()
+group_view::get_index ()
 {
-  return process_index;
+  return index;
 }
 
 execution_status
@@ -34,14 +40,84 @@ group_view::recv_message (size_t index, size_t message_size, size_t tag,
                                     message);
 }
 
+execution_status
+group_view::send_message (size_t index, block_string &str, size_t tag)
+{
+  double *message = str.get_arr ();
+  size_t message_size = str.get_arr_size ();
+  return mpi_message::send_message (comm, index_map[index], message_size, tag,
+                                    message);
+}
+
+execution_status
+group_view::recv_message (size_t index, block_string &str, size_t tag)
+{
+  double *message = str.get_arr ();
+  size_t message_size = str.get_arr_size ();
+  return mpi_message::recv_message (comm, index_map[index], message_size, tag,
+                                    message);
+}
+
+size_t
+group_view::get_real_index_broad_cast (size_t index_in_group,
+                                       size_t start_index)
+{
+  return (index_in_group >= start_index)
+             ? index_in_group - start_index
+             : group_size + index_in_group - start_index;
+}
+
+size_t
+group_view::get_index_in_group_broad_cast (size_t real_index,
+                                           size_t start_index)
+{
+  return (start_index + real_index) % group_size;
+}
+
+execution_status
+group_view::broad_cast (size_t arr_size, double *arr, size_t send_index)
+{
+  size_t real_index = get_real_index_broad_cast (index, send_index);
+  size_t start_index = 0;
+  size_t bin = 0;
+  while (start_index != real_index)
+    {
+      size_t diff = real_index - start_index;
+      bin = 1;
+      while (bin << 1 <= diff)
+        bin <<= 1;
+      start_index += bin;
+    }
+  if (bin)
+    {
+      size_t i = get_index_in_group_broad_cast (real_index - bin, send_index);
+      mpi_message::recv_message (comm, index_map[i], arr_size, bin, arr);
+      bin >>= 1;
+      while (real_index + bin >= group_size)
+        bin >>= 1;
+    }
+  else
+    {
+      bin = 1;
+      while (bin << 1 < group_size)
+        bin <<= 1;
+    }
+
+  while (bin)
+    {
+      size_t i = get_index_in_group_broad_cast (real_index + bin, send_index);
+      mpi_message::send_message (comm, index_map[i], arr_size, bin, arr);
+      bin >>= 1;
+    }
+  return execution_status::success;
+}
+
 void
-group_view::create_group_for_triangulization (MPI_Comm &_comm,
-                                              size_t start_index,
+group_view::create_group_for_triangulization (size_t start_index,
                                               size_t part_size,
                                               size_t bin_step)
 {
   size_t bin_step_x2 = 2 * bin_step;
-  comm = _comm;
   int buf{};
   MPI_Comm_rank (comm, &buf);
   size_t my_index = size_t (buf);
@@ -61,7 +137,7 @@ group_view::create_group_for_triangulization (MPI_Comm &_comm,
     {
       if (group_id < group_num)
         {
-          process_index = 0;
+          index = 0;
           if (group_id < ost)
             group_size++;
           flag1 = false;
@@ -74,7 +150,7 @@ group_view::create_group_for_triangulization (MPI_Comm &_comm,
         {
           if (group_id < ost)
             group_size++;
-          process_index = group_size - 1;
+          index = group_size - 1;
           flag2 = false;
         }
     }
@@ -94,12 +170,12 @@ group_view::create_group_for_triangulization (MPI_Comm &_comm,
         {
           group_id = real_index / (group_size - 1);
           group_size++;
-          process_index = real_index % (group_size - 1) + 1;
+          index = real_index % (group_size - 1) + 1;
         }
       else
         {
           group_id = ost + (real_index - buf) / (group_size - 2);
-          process_index = (real_index - buf) % (group_size - 2) + 1;
+          index = (real_index - buf) % (group_size - 2) + 1;
         }
     }
   index_map[0] = (bin_step_x2 * group_id + start_index) % p;

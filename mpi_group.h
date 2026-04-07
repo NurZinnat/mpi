@@ -21,7 +21,7 @@ public:
   mpi_group &operator= (const mpi_group &x) = delete;
   mpi_group &operator= (mpi_group &&x) = delete;
 
-  void init_mpi_group (MPI_Comm main_comm, int color);
+  void init_mpi_group (MPI_Comm &main_comm, int color);
   size_t get_process_index () const;
   size_t get_total_process () const;
   size_t get_active_process () const;
@@ -33,6 +33,8 @@ public:
                                  double *message);
   execution_status recv_message (size_t index, size_t message_size, size_t tag,
                                  double *message);
+  void split (int color);
+  MPI_Comm &get_comm ();
 };
 
 #endif // MPI_GROUP_H

@@ -5,6 +5,16 @@ reflection_vectors::push (reflection_type rv_type, size_t r_index,
                           size_t c_index)
 {
   size_t k = get_k ();
+  size_t shift = get_size (rv_type, r_index, c_index);
+  shift_plus (shift);
+}
+
+size_t
+reflection_vectors::get_size (reflection_type rv_type, size_t r_index,
+                              size_t c_index)
+{
+  size_t k = get_k ();
+
   size_t shift{};
   if (rv_type == reflection_type::triangular)
     {
@@ -21,7 +31,7 @@ reflection_vectors::push (reflection_type rv_type, size_t r_index,
       else
         shift = get_reset_rv_size ();
     }
-  shift_plus (shift);
+  return shift;
 }
 
 void
@@ -491,8 +501,8 @@ reflection_vectors::spread_triangular_reflection (block_view &b)
   return execution_status::success;
 }
 execution_status
-reflection_vectors::build_reset_reflection_and_ref (block_view &b,
-                                                    block_view &di_b)
+reflection_vectors::build_reset_reflection_and_ref (block_view &di_b,
+                                                    block_view &b)
 {
   double eps = get_eps ();
   if (!di_b.square ())
@@ -799,7 +809,7 @@ reflection_vectors::build_reset_reflection_and_ref (block_view &b,
 }
 
 execution_status
-reflection_vectors::build_reset_reflection (block_view &b, block_view &di_b)
+reflection_vectors::build_reset_reflection (block_view &di_b, block_view &b)
 {
   double eps = get_eps ();
   if (!di_b.square ())
@@ -928,8 +938,8 @@ reflection_vectors::build_reset_reflection (block_view &b, block_view &di_b)
   return execution_status::success;
 }
 execution_status
-reflection_vectors::spread_reset_reflection_and_ref (block_view &bl,
-                                                     block_view &di_bl)
+reflection_vectors::spread_reset_reflection_and_ref (block_view &di_bl,
+                                                     block_view &bl)
 {
   size_t c_n = bl.get_c_num ();
   size_t vec_size = get_vector_size ();
@@ -1004,7 +1014,7 @@ reflection_vectors::spread_reset_reflection_and_ref (block_view &bl,
 }
 
 execution_status
-reflection_vectors::spread_reset_reflection (block_view &bl, block_view &di_bl)
+reflection_vectors::spread_reset_reflection (block_view &di_bl, block_view &bl)
 {
   size_t r_n = bl.get_r_num ();
   size_t c_n = bl.get_c_num ();
@@ -1240,8 +1250,8 @@ reflection_vectors::spread_transposition_triangular_reflection (block_view &b)
 }
 
 execution_status
-reflection_vectors::spread_transposition_reset_reflection (block_view &bl,
-                                                           block_view &di_bl)
+reflection_vectors::spread_transposition_reset_reflection (block_view &di_bl,
+                                                           block_view &bl)
 {
   size_t r_n = bl.get_r_num ();
   size_t c_n = bl.get_c_num ();

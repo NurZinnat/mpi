@@ -12,15 +12,35 @@ mpi_group::~mpi_group ()
     MPI_Comm_free (&comm);
 }
 
+MPI_Comm &
+mpi_group::get_comm ()
+{
+  return comm;
+}
 void
-mpi_group::init_mpi_group (MPI_Comm main_comm, int color)
+mpi_group::init_mpi_group (MPI_Comm &main_comm, int color)
 {
   int buf = 0;
   MPI_Comm_size (main_comm, &buf);
   total_process = size_t (buf);
   MPI_Comm_rank (main_comm, &buf);
   process_index = size_t (buf);
-  MPI_Comm_split (main_comm, color, process_index, &comm);
+  MPI_Comm buf_comm{};
+  MPI_Comm_split (main_comm, color, process_index, &buf_comm);
+  if (comm != MPI_COMM_NULL && comm != MPI_COMM_WORLD)
+    MPI_Comm_free (&comm);
+  comm = buf_comm;
+  active_process_flag = color != MPI_UNDEFINED;
+}
+
+void
+mpi_group::split (int color)
+{
+  MPI_Comm buf_comm{};
+  MPI_Comm_split (comm, color, process_index, &buf_comm);
+  if (comm != MPI_COMM_NULL && comm != MPI_COMM_WORLD)
+    MPI_Comm_free (&comm);
+  comm = buf_comm;
   active_process_flag = color != MPI_UNDEFINED;
 }
 
