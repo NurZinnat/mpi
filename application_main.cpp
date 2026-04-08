@@ -3,9 +3,10 @@ void
 application::application_main (size_t argc, char *argv[])
 {
   cmd_arg_parsing (argc, argv);
+  return;
   if (has_error (status))
     return;
-
+  return;
   init_application ();
   if (inactive ())
     return;

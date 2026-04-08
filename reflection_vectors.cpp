@@ -4,7 +4,6 @@ void
 reflection_vectors::push (reflection_type rv_type, size_t r_index,
                           size_t c_index)
 {
-  size_t k = get_k ();
   size_t shift = get_size (rv_type, r_index, c_index);
   shift_plus (shift);
 }

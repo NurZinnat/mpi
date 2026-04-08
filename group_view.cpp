@@ -5,6 +5,7 @@ group_view::init_group_view (MPI_Comm &_comm, size_t p)
 {
   comm = _comm;
   index_map = std::make_unique<size_t[]> (p);
+  return execution_status::success;
 }
 size_t
 group_view::get_group_id ()
@@ -200,7 +201,7 @@ group_view::create_group_for_triangulization (size_t start_index,
     }
   buf = real_index_last - real_index_start;
   size_t k = buf / (bin_step_x2 - 2);
-  size_t ost = buf % (bin_step_x2 - 2);
+  ost = buf % (bin_step_x2 - 2);
   if (ost)
     k++;
   size_t ttt = last_index - bin_step_x2 * k;

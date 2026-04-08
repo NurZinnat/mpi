@@ -6,10 +6,25 @@ mpi_group::mpi_group (MPI_Comm main_comm, int color)
   init_mpi_group (main_comm, color);
 }
 
-mpi_group::~mpi_group ()
+mpi_group::~mpi_group () { free_mpi (); }
+
+void
+mpi_group::free_mpi ()
 {
+  int initialized;
+  MPI_Initialized (&initialized);
+
+  if (!initialized)
+    {
+      comm = MPI_UNDEFINED;
+      return; 
+    }
+
   if (comm != MPI_COMM_NULL && comm != MPI_COMM_WORLD)
-    MPI_Comm_free (&comm);
+    {
+      MPI_Comm_free (&comm);
+    }
+  comm = MPI_UNDEFINED;
 }
 
 MPI_Comm &

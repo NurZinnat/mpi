@@ -173,7 +173,6 @@ block_string::init_by_formula (size_t s)
 execution_status
 block_string::read_b_row_from_file_to_arr (FILE *fp)
 {
-  size_t m_size = get_m_size ();
   size_t b_size = get_b_size ();
   size_t k = get_k ();
   size_t rb_size = get_bost_size (global_index);

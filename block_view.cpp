@@ -31,22 +31,6 @@ block_view::square ()
   return get_r_num () == get_c_num ();
 }
 
-void
-block_view::print ()
-{
-  printf ("\n\nblock_print:\n");
-  printf ("r_num = %ld\nc_num = %ld\n", r_num, c_num);
-  double *arr = get_arr ();
-  for (size_t i = 0; i < r_num; i++)
-    {
-      size_t index = c_num * i;
-      for (size_t j = 0; j < c_num; j++)
-        printf (" %10.3e", arr[index++]);
-      printf ("\n");
-    }
-  printf ("\n\n\n");
-}
-
 block_view &
 block_view::operator= (const block_view &x)
 {
@@ -62,8 +46,8 @@ block_view::operator= (const block_view &x)
       return *this;
     }
   data_view::operator= (static_cast<const data_view &> (x));
-  set_r_num (x.get_r_num ());
-  set_c_num (x.get_c_num ());
+  set_r_num (x_r_num);
+  set_c_num (x_c_num);
   set_m_type (x.get_m_type ());
   return *this;
 }

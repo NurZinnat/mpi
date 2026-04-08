@@ -1,12 +1,15 @@
 #include "application.h"
 #include "simple_functions.h"
+void
+application::free_mpi ()
+{
+  mpi_group::free_mpi ();
+}
 
 execution_status
 application::init_application ()
 {
   init_m_sizes (m_size, b_size);
-  MPI_Comm world = MPI_COMM_WORLD;
-  init_mpi_group (world, 0);
   size_t k = get_k ();
   size_t process_index = get_process_index ();
   int color = 0;
@@ -227,6 +230,8 @@ application::init_norm ()
 execution_status
 application::cmd_arg_parsing (size_t argc, char *argv[])
 {
+  MPI_Comm world = MPI_COMM_WORLD;
+  init_mpi_group (world, 0);
   if (argc < 5 || argc > 6)
     {
       status = execution_status::cmd_parse_error;

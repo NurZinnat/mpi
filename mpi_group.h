@@ -6,7 +6,7 @@
 #include <stdlib.h>
 class mpi_group : private mpi_message
 {
-  MPI_Comm comm{};
+  MPI_Comm comm =  MPI_COMM_NULL;
   size_t total_process{};
   size_t active_process{};
   size_t process_index{};
@@ -16,6 +16,7 @@ public:
   mpi_group () = default;
   mpi_group (MPI_Comm main_comm, int color);
   ~mpi_group ();
+  void free_mpi();
   mpi_group (const mpi_group &x) = delete;
   mpi_group (mpi_group &&x) = delete;
   mpi_group &operator= (const mpi_group &x) = delete;

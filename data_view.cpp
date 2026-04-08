@@ -54,7 +54,7 @@ data_view::operator= (const data_view &x)
 }
 
 data_view &
-data_view::operator= (const data_view &x)
+data_view::operator+= (const data_view &x)
 {
   double *x_arr = x.get_arr ();
   size_t x_arr_size = x.get_arr_size ();

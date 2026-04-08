@@ -71,6 +71,7 @@ public:
 
   double *get_bufer ();
   void find_diapazon (size_t len, size_t p, size_t index, size_t shift);
+  void free_mpi ();
 };
 
 #endif // APPLICATION_H

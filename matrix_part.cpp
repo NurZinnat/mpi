@@ -283,7 +283,6 @@ void
 matrix_part::get_b_str (block_string &str, size_t local_index, size_t start,
                         size_t end)
 {
-  size_t k = get_k ();
   size_t b_size = get_b_size ();
   size_t m_size = get_m_size ();
   size_t r_num = get_local_bost_size (local_index);

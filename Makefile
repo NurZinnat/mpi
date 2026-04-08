@@ -33,8 +33,8 @@ TTT = a.out
 DEBUG_TARGET = debug.out
 
 # Список объектов
-OBJS = main.o application.o block.o cmd_arg_parser.o data.o matrix_part.o mpi_communicator.o m_sizes.o precision.o reflection_vectors.o rv_sizes.o simple_functions.o application_main.o block_sizes.o block_view.o mpi_group.o
-OBJS_DEBUG = main_debug.o application_debug.o block_debug.o cmd_arg_parser_debug.o data_debug.o matrix_part_debug.o mpi_communicator_debug.o m_sizes_debug.o precision_debug.o reflection_vectors_debug.o rv_sizes_debug.o simple_functions_debug.o application_main_debug.o block_sizes_debug.o block_view_debug.o mpi_group_debug.o
+OBJS = main.o application.o block_string.o cmd_arg_parser.o data.o data_view.o group_view.o householder_logic.o matrix_part.o mpi_group.o mpi_message.o m_sizes.o precision.o reflection_vectors.o rv_sizes.o simple_functions.o application_main.o block_sizes.o block_view.o
+OBJS_DEBUG = main_debug.o application_debug.o block_string_debug.o cmd_arg_parser_debug.o data_debug.o data_view_debug.o group_view_debug.o householder_logic_debug.o matrix_part_debug.o mpi_group_debug.o mpi_message_debug.o m_sizes_debug.o precision_debug.o reflection_vectors_debug.o rv_sizes_debug.o simple_functions_debug.o application_main_debug.o block_sizes_debug.o block_view_debug.o
 
 # Цель по умолчанию - релизная сборка
 all: $(TTT)
@@ -57,8 +57,8 @@ main.o: main.cpp
 application.o: application.cpp application.h
 	$(COMPILE) application.cpp
 
-block.o: block.cpp block.h execution_status.h
-	$(COMPILE) block.cpp
+block_string.o: block_string.cpp block_string.h
+	$(COMPILE) block_string.cpp
 
 cmd_arg_parser.o: cmd_arg_parser.cpp cmd_arg_parser.h
 	$(COMPILE) cmd_arg_parser.cpp
@@ -66,11 +66,23 @@ cmd_arg_parser.o: cmd_arg_parser.cpp cmd_arg_parser.h
 data.o: data.cpp data.h execution_status.h
 	$(COMPILE) data.cpp
 
+data_view.o: data_view.cpp data_view.h
+	$(COMPILE) data_view.cpp
+
+group_view.o: group_view.cpp group_view.h
+	$(COMPILE) group_view.cpp
+
+householder_logic.o: householder_logic.cpp application.h
+	$(COMPILE) householder_logic.cpp
+
 matrix_part.o: matrix_part.cpp matrix_part.h matrix_type.h execution_status.h
 	$(COMPILE) matrix_part.cpp
 
-mpi_communicator.o: mpi_communicator.cpp mpi_communicator.h
-	$(COMPILE) mpi_communicator.cpp
+mpi_group.o: mpi_group.cpp mpi_group.h
+	$(COMPILE) mpi_group.cpp
+
+mpi_message.o: mpi_message.cpp mpi_message.h
+	$(COMPILE) mpi_message.cpp
 
 m_sizes.o: m_sizes.cpp m_sizes.h
 	$(COMPILE) m_sizes.cpp
@@ -96,9 +108,6 @@ block_sizes.o: block_sizes.cpp block_sizes.h
 block_view.o: block_view.cpp block_view.h
 	$(COMPILE) block_view.cpp
 
-mpi_group.o: mpi_group.cpp mpi_group.h
-	$(COMPILE) mpi_group.cpp
-
 # Правила для отладочных объектных файлов
 main_debug.o: main.cpp
 	$(COMPILE_DEBUG) main.cpp -o main_debug.o
@@ -106,8 +115,8 @@ main_debug.o: main.cpp
 application_debug.o: application.cpp application.h
 	$(COMPILE_DEBUG) application.cpp -o application_debug.o
 
-block_debug.o: block.cpp block.h execution_status.h
-	$(COMPILE_DEBUG) block.cpp -o block_debug.o
+block_string_debug.o: block_string.cpp block_string.h
+	$(COMPILE_DEBUG) block_string.cpp -o block_string_debug.o
 
 cmd_arg_parser_debug.o: cmd_arg_parser.cpp cmd_arg_parser.h
 	$(COMPILE_DEBUG) cmd_arg_parser.cpp -o cmd_arg_parser_debug.o
@@ -115,11 +124,23 @@ cmd_arg_parser_debug.o: cmd_arg_parser.cpp cmd_arg_parser.h
 data_debug.o: data.cpp data.h execution_status.h
 	$(COMPILE_DEBUG) data.cpp -o data_debug.o
 
+data_view_debug.o: data_view.cpp data_view.h
+	$(COMPILE_DEBUG) data_view.cpp -o data_view_debug.o
+
+group_view_debug.o: group_view.cpp group_view.h
+	$(COMPILE_DEBUG) group_view.cpp -o group_view_debug.o
+
+householder_logic_debug.o: householder_logic.cpp application.h
+	$(COMPILE_DEBUG) householder_logic.cpp -o householder_logic_debug.o
+
 matrix_part_debug.o: matrix_part.cpp matrix_part.h matrix_type.h execution_status.h
 	$(COMPILE_DEBUG) matrix_part.cpp -o matrix_part_debug.o
 
-mpi_communicator_debug.o: mpi_communicator.cpp mpi_communicator.h
-	$(COMPILE_DEBUG) mpi_communicator.cpp -o mpi_communicator_debug.o
+mpi_group_debug.o: mpi_group.cpp mpi_group.h
+	$(COMPILE_DEBUG) mpi_group.cpp -o mpi_group_debug.o
+
+mpi_message_debug.o: mpi_message.cpp mpi_message.h
+	$(COMPILE_DEBUG) mpi_message.cpp -o mpi_message_debug.o
 
 m_sizes_debug.o: m_sizes.cpp m_sizes.h
 	$(COMPILE_DEBUG) m_sizes.cpp -o m_sizes_debug.o
@@ -144,9 +165,6 @@ block_sizes_debug.o: block_sizes.cpp block_sizes.h
 
 block_view_debug.o: block_view.cpp block_view.h
 	$(COMPILE_DEBUG) block_view.cpp -o block_view_debug.o
-
-mpi_group_debug.o: mpi_group.cpp mpi_group.h
-	$(COMPILE_DEBUG) mpi_group.cpp -o mpi_group_debug.o
 
 clean:
 	rm -rf *.o $(TTT) $(DEBUG_TARGET) *.d
