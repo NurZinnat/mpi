@@ -20,19 +20,19 @@ matrix_part::init_matrix_part (size_t m_size, size_t b_size, size_t _index,
                                size_t _p)
 {
   init_m_sizes (m_size, b_size);
-  
+
   part_index = _index;
   p = _p;
   size_t k = get_k ();
   size_t r = get_r ();
   part_size = k / p + (k % p && part_index <= (k - 1) % p ? 1 : 0);
   // printf ("k = %ld p = %ld part_size = %ld\n", k, p, part_size);
-  
+
   size_t arr_size
       = m_size * b_size * (part_size - 1)
         + (r != 0 && (k - 1) % p == part_index ? m_size * r : m_size * b_size);
   // printf ("arr_size = %ld\n", arr_size);
-  
+
   return data_memory_allocate (arr_size);
 }
 
@@ -101,8 +101,8 @@ matrix_part::init_by_formula (size_t s)
            global_b_col_index++)
         {
           size_t c_end = c_start + get_bost_size (global_b_col_index);
-          for (size_t r_index = r_start; r_index < r_end; r_index++)
-            for (size_t c_index = c_start; c_index < c_end; c_index++)
+          for (size_t c_index = c_start; c_index < c_end; c_index++)
+            for (size_t r_index = r_start; r_index < r_end; r_index++)
               {
                 arr[arr_index++] = formula (s, r_index, c_index);
               }
