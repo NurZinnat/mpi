@@ -33,3 +33,10 @@ array_add_to_first (size_t size, double *res_arr, double *arr)
   for (size_t i = 0; i < size; i++)
     res_arr[i] += arr[i];
 }
+
+void
+arr_set_val (size_t arr_size, double *arr, double val)
+{
+  for (size_t i = 0; i < arr_size; i++)
+    arr[i] = val;
+}

@@ -131,11 +131,14 @@ application::read_matrix ()
 void
 application::norm_calculate ()
 {
+  size_t b_size = get_b_size ();
   size_t k = get_k ();
   double *producer = bufer_1.get ();
   double *consumer = bufer_2.get ();
   for (size_t i = 0; i < k; i++)
     {
+      arr_set_val (b_size, producer, 0);
+      arr_set_val (b_size, consumer, 0);
       size_t size = matrix.calculate_norm_part (i, producer);
       reduce_sum_arr (producer, consumer, size);
       norm = std::max (norm, max_from_array (size, consumer));
@@ -277,6 +280,7 @@ void
 application::build_triangular_reflection (size_t local_r_index, size_t c_index)
 {
   matrix.get_block (blocks[0], local_r_index, c_index);
+  blocks[0].print_debug ();
   rv.build_triangular_reflection (blocks[0]);
 }
 

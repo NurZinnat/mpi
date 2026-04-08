@@ -28,6 +28,7 @@ public:
   bool square ();
   execution_status inverse_triangular_upper (block_view &x);
   void zero_padding ();
+  void print_debug ();
 };
 
 #endif // BLOCK_VIEW_H

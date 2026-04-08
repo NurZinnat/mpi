@@ -1,4 +1,5 @@
 #include "block_view.h"
+#include "simple_functions.h"
 
 void
 block_view::print ()
@@ -13,6 +14,18 @@ block_view::print ()
         printf (" %10.3e", arr[index++]);
       printf ("\n");
     }
+  printf ("\n\n\n");
+}
+
+void
+block_view::print_debug ()
+{
+  printf ("\n\nblock_view_print:\n");
+  size_t r_num = get_r_num ();
+  size_t c_num = get_c_num ();
+  printf ("r_num = %ld\nc_num = %ld\n", r_num, c_num);
+  double *arr = get_arr ();
+  print_array (c_num * r_num, arr);
   printf ("\n\n\n");
 }
 

@@ -3,10 +3,9 @@ void
 application::application_main (size_t argc, char *argv[])
 {
   cmd_arg_parsing (argc, argv);
-  return;
   if (has_error (status))
     return;
-  return;
+
   init_application ();
   if (inactive ())
     return;
@@ -21,8 +20,12 @@ application::application_main (size_t argc, char *argv[])
 
   norm_calculate ();
 
+  if (get_process_index () == 0)
+    printf ("\n\n\nnorm = %lf\n\n\n", norm);
+
   init_norm ();
+
   triangulization ();
 
-  print_transpozition_matrix ();
+  print_matrix ();
 }

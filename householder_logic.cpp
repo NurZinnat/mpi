@@ -11,6 +11,7 @@ application::triangulization_local_part (size_t step)
   size_t part_index = get_process_index ();
   build_triangular_reflection (start, step);
   spread_triangular_reflection (start, step + 1, k);
+  return;
   rv.push (reflection_vectors::reflection_type::triangular, step, step);
   for (size_t r_index = start + 1; r_index < part_size; r_index++)
     {
@@ -125,7 +126,9 @@ application::triangulization ()
   size_t k = get_k ();
   for (size_t step = 0; step < k; step++)
     {
+      if (step == 1)
+        return;
       triangulization_local_part (step);
-      triangulization_communicate_part (step);
+      //triangulization_communicate_part (step);
     }
 }

@@ -16,15 +16,15 @@ mpi_group::free_mpi ()
 
   if (!initialized)
     {
-      comm = MPI_UNDEFINED;
-      return; 
+      comm = MPI_COMM_NULL;
+      return;
     }
 
   if (comm != MPI_COMM_NULL && comm != MPI_COMM_WORLD)
     {
       MPI_Comm_free (&comm);
     }
-  comm = MPI_UNDEFINED;
+  comm = MPI_COMM_NULL;
 }
 
 MPI_Comm &
@@ -43,20 +43,42 @@ mpi_group::init_mpi_group (MPI_Comm &main_comm, int color)
   MPI_Comm buf_comm{};
   MPI_Comm_split (main_comm, color, process_index, &buf_comm);
   if (comm != MPI_COMM_NULL && comm != MPI_COMM_WORLD)
-    MPI_Comm_free (&comm);
-  comm = buf_comm;
+    {
+      MPI_Comm_free (&comm);
+      comm = MPI_COMM_NULL;
+    }
   active_process_flag = color != MPI_UNDEFINED;
+  if (!active_process_flag)
+    return;
+  comm = buf_comm;
+  MPI_Comm_size (comm, &buf);
+  total_process = size_t (buf);
+  MPI_Comm_rank (comm, &buf);
+  process_index = size_t (buf);
+  active_process = total_process;
 }
 
 void
 mpi_group::split (int color)
 {
+  int buf{};
   MPI_Comm buf_comm{};
   MPI_Comm_split (comm, color, process_index, &buf_comm);
   if (comm != MPI_COMM_NULL && comm != MPI_COMM_WORLD)
-    MPI_Comm_free (&comm);
-  comm = buf_comm;
+    {
+      MPI_Comm_free (&comm);
+      comm = MPI_COMM_NULL;
+    }
+
   active_process_flag = color != MPI_UNDEFINED;
+  if (!active_process_flag)
+    return;
+  comm = buf_comm;
+  MPI_Comm_size (comm, &buf);
+  total_process = size_t (buf);
+  MPI_Comm_rank (comm, &buf);
+  process_index = size_t (buf);
+  active_process = total_process;
 }
 
 bool
