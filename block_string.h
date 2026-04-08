@@ -40,7 +40,6 @@ public:
   void set_shift (size_t value);
   void set_str_size (size_t value);
 
-  void get_block (block_view &b, size_t c_b_index);
 
   void init_by_formula (size_t s);
   double formula (size_t s, size_t i, size_t j);

@@ -19,7 +19,9 @@ application::application_main (size_t argc, char *argv[])
   print_matrix ();
 
   norm_calculate ();
-  
+
+  init_norm ();
+  triangulization ();
 
   print_transpozition_matrix ();
 }
