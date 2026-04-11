@@ -40,3 +40,12 @@ arr_set_val (size_t arr_size, double *arr, double val)
   for (size_t i = 0; i < arr_size; i++)
     arr[i] = val;
 }
+
+double
+array_sum (size_t arr_size, double *arr)
+{
+  double res{};
+  for (size_t i = 0; i < arr_size; i++)
+    res += arr[i];
+  return res;
+}

@@ -829,11 +829,11 @@ reflection_vectors::build_reset_reflection (block_view &di_b, block_view &b)
       return execution_status::runtime_error;
     }
 
-  if (get_arr_size () < (r_n + 1) * c_n)
-    {
-      printf ("reflection::block_reset: small size\n");
-      return execution_status::runtime_error;
-    }
+  // if (get_arr_size () < (r_n + 1) * c_n)
+  //   {
+  //     printf ("reflection::block_reset: small size\n");
+  //     return execution_status::runtime_error;
+  //   }
   double *b_arr = b.get_arr ();
   double *di_b_arr = di_b.get_arr ();
   double *arr = get_shift_arr ();
@@ -1398,26 +1398,25 @@ reflection_vectors::copy_reset_reflection (reflection_vectors &x)
 
 void
 reflection_vectors::spread_triangular_reflection (block_string &str,
-                                                  block_view *blocks,
                                                   size_t c_start, size_t c_end)
 {
+  block_view block;
   for (size_t c_index = c_start; c_index < c_end; c_index++)
     {
-      str.get_block (blocks[0], c_index);
-      spread_triangular_reflection (blocks[0]);
+      str.get_block (block, c_index);
+      spread_triangular_reflection (block);
     }
 }
 
 void
-reflection_vectors::spread_reset_reflection (block_string &str,
-                                             block_string &sub_str,
-                                             block_view *blocks,
+reflection_vectors::spread_reset_reflection (block_string *strings,
                                              size_t c_start, size_t c_end)
 {
+  block_view blocks[2];
   for (size_t c_index = c_start; c_index < c_end; c_index++)
     {
-      str.get_block (blocks[0], c_index);
-      sub_str.get_block (blocks[1], c_index);
+      strings[0].get_block (blocks[0], c_index);
+      strings[1].get_block (blocks[1], c_index);
       spread_reset_reflection (blocks[0], blocks[1]);
     }
 }

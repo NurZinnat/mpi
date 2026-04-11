@@ -120,9 +120,17 @@ mpi_group::has_error (execution_status status)
 }
 
 void
-mpi_group::reduce_sum_arr (double *producer, double *consumer, size_t size)
+mpi_group::reduce_sum_arr_all (double *producer, double *consumer, size_t size)
 {
   MPI_Allreduce (producer, consumer, int (size), MPI_DOUBLE, MPI_SUM, comm);
+}
+
+void
+mpi_group::reduce_sum_arr (size_t recv_index, double *producer,
+                           double *consumer, size_t size)
+{
+  MPI_Reduce (producer, consumer, static_cast<int> (size), MPI_DOUBLE, MPI_SUM,
+              static_cast<int> (recv_index), comm);
 }
 
 execution_status
@@ -137,4 +145,16 @@ mpi_group::recv_message (size_t index, size_t message_size, size_t tag,
                          double *message)
 {
   return mpi_message::recv_message (comm, index, message_size, tag, message);
+}
+
+void
+mpi_group::barier ()
+{
+  MPI_Barrier (comm);
+}
+
+execution_status
+mpi_group::broadcast (size_t send_index, size_t arr_size, double *arr)
+{
+  return mpi_message::broadcast (comm, send_index, arr_size, arr);
 }

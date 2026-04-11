@@ -36,17 +36,21 @@ application::init_application ()
                                         get_active_process ());
   if (status != execution_status::success)
     return status;
-  rv.set_arr (sub_matrix.get_arr ());
-
-  for (size_t i = 0; i < 3; i++)
-    blocks[i].init_block_view (m_size, b_size, 0);
 
   status = rv.init_reflection_vectors (m_size, b_size, 0);
   if (status != execution_status::success)
     return status;
+  rv.set_arr (sub_matrix.get_arr ());
   print_size = r;
   bufer_1 = std::make_unique<double[]> (b_size);
   bufer_2 = std::make_unique<double[]> (b_size);
+  for_blocks = std::make_unique<double[]> (b_size * b_size * 2);
+
+  for (size_t i = 0; i < 2; i++)
+    strings[i].init_m_sizes (m_size, b_size);
+  for (size_t i = 0; i < 3; i++)
+    blocks[i].init_m_sizes (m_size, b_size);
+
   return status;
 }
 
@@ -128,6 +132,84 @@ application::read_matrix ()
   return execution_status::success;
 }
 
+execution_status
+application::read_sub_matrix ()
+{
+  if (s > 0)
+    {
+      sub_matrix.init_by_formula (s);
+      return execution_status::success;
+    }
+  size_t m_size = get_m_size ();
+  size_t k = get_k ();
+  size_t p = get_active_process ();
+  size_t process_index = get_process_index ();
+  FILE *fp = nullptr;
+  if (process_index == 0)
+    {
+      fp = fopen (file_name, "r");
+      if (!fp)
+        status = execution_status::open;
+    }
+  if (has_error (status))
+    {
+      status = execution_status::undefined_error;
+      return status;
+    }
+  if (process_index == 0)
+    for (size_t b_row_index = 0; b_row_index < k; b_row_index++)
+      {
+
+        size_t consumer_process_index = b_row_index % p;
+
+        if (consumer_process_index == 0)
+          {
+            double *bufer = sub_matrix.get_b_row_pointer (b_row_index / p);
+            size_t size{};
+            status = sub_matrix.read_b_row_from_file_to_arr (b_row_index, size,
+                                                             bufer, fp);
+            if (has_error (status))
+              {
+                status = execution_status::undefined_error;
+                // printf ("kaka\n");
+                fclose (fp);
+                return status;
+              }
+          }
+        else
+          {
+            double *message = get_bufer ();
+            size_t size{};
+            status = sub_matrix.read_b_row_from_file_to_arr (b_row_index, size,
+                                                             message, fp);
+            if (has_error (status))
+              {
+                status = execution_status::undefined_error;
+                return status;
+              }
+            send_message (consumer_process_index, size, b_row_index, message);
+          }
+      }
+  else
+    for (size_t b_row_index = 0; b_row_index < k; b_row_index++)
+      {
+        if (has_error (status))
+          {
+            status = execution_status::undefined_error;
+            return status;
+          }
+        if (b_row_index % p != process_index)
+          continue;
+        size_t rb_size = sub_matrix.get_bost_size (b_row_index);
+        size_t size = rb_size * m_size;
+        double *b_row = sub_matrix.get_b_row_pointer (b_row_index / p);
+        recv_message (0, size, b_row_index, b_row);
+      }
+  if (process_index == 0)
+    fclose (fp);
+  return execution_status::success;
+}
+
 void
 application::norm_calculate ()
 {
@@ -140,7 +222,7 @@ application::norm_calculate ()
       arr_set_val (b_size, producer, 0);
       arr_set_val (b_size, consumer, 0);
       size_t size = matrix.calculate_norm_part (i, producer);
-      reduce_sum_arr (producer, consumer, size);
+      reduce_sum_arr_all (producer, consumer, size);
       norm = std::max (norm, max_from_array (size, consumer));
     }
 }
@@ -172,6 +254,39 @@ application::print_matrix ()
           continue;
         double *bufer = get_bufer ();
         matrix.get_row_part (row_index, print_size, bufer);
+        send_message (0, print_size, row_index, bufer);
+      }
+  if (process_index == 0)
+    printf ("\n\n");
+}
+
+void
+application::print_sub_matrix ()
+{
+  size_t process_index = get_process_index ();
+  size_t p = get_active_process ();
+  size_t b_size = get_b_size ();
+  if (process_index == 0)
+    for (size_t row_index = 0; row_index < print_size; row_index++)
+      {
+        size_t global_b_row_index = row_index / b_size;
+        size_t source = global_b_row_index % p;
+        double *print_arr = get_bufer ();
+        if (source == 0)
+          sub_matrix.get_row_part (row_index, print_size, print_arr);
+        else
+          recv_message (source, print_size, row_index, print_arr);
+        print_array (print_size, print_arr);
+      }
+  else
+    for (size_t row_index = 0; row_index < print_size; row_index++)
+      {
+        size_t global_b_row_index = row_index / b_size;
+        size_t source = global_b_row_index % p;
+        if (source != process_index)
+          continue;
+        double *bufer = get_bufer ();
+        sub_matrix.get_row_part (row_index, print_size, bufer);
         send_message (0, print_size, row_index, bufer);
       }
   if (process_index == 0)
@@ -225,8 +340,6 @@ void
 application::init_norm ()
 {
   matrix.set_norm (norm);
-  for (size_t i = 0; i < 3; i++)
-    blocks[i].set_eps (norm);
   rv.set_eps (norm);
 }
 
@@ -265,22 +378,27 @@ application::cmd_arg_parsing (size_t argc, char *argv[])
       status = execution_status::cmd_parse_error;
       return status;
     }
+
   if (argc > 5)
     file_name = argv[5];
+  n = m_size;
+  m = b_size;
   if (r > m_size)
     r = m_size;
   if (b_size > m_size)
     b_size = m_size;
   if (m_size == 0 || b_size == 0 || s > 4)
     status = execution_status::cmd_parse_error;
+  ppppp = get_active_process ();
   return status;
 }
 
 void
 application::build_triangular_reflection (size_t local_r_index, size_t c_index)
 {
+  block_view blocks[2];
   matrix.get_block (blocks[0], local_r_index, c_index);
-  blocks[0].print_debug ();
+  // blocks[0].print_debug ();
   rv.build_triangular_reflection (blocks[0]);
 }
 
@@ -288,10 +406,11 @@ void
 application::spread_triangular_reflection (size_t local_r_index,
                                            size_t c_start, size_t c_end)
 {
+  block_view block;
   for (size_t c_index = c_start; c_index < c_end; c_index++)
     {
-      matrix.get_block (blocks[0], local_r_index, c_index);
-      rv.spread_triangular_reflection (blocks[0]);
+      matrix.get_block (block, local_r_index, c_index);
+      rv.spread_triangular_reflection (block);
     }
 }
 
@@ -299,6 +418,7 @@ void
 application::build_reset_reflection (size_t sub_local_r_index,
                                      size_t local_r_index, size_t c_index)
 {
+  block_view blocks[2];
   matrix.get_block (blocks[0], sub_local_r_index, c_index);
   matrix.get_block (blocks[1], local_r_index, c_index);
   rv.build_reset_reflection (blocks[0], blocks[1]);
@@ -309,6 +429,7 @@ application::spread_reset_reflection (size_t sub_local_r_index,
                                       size_t local_r_index, size_t c_start,
                                       size_t c_end)
 {
+  block_view blocks[2];
   for (size_t c_index = c_start; c_index < c_end; c_index++)
     {
       matrix.get_block (blocks[0], sub_local_r_index, c_index);
@@ -344,4 +465,12 @@ application::find_diapazon (size_t len, size_t p, size_t index, size_t shift)
   end = start + ttt + ((index < ost) ? 1 : 0);
   start += shift;
   end += shift;
+}
+
+void
+application::print_results ()
+{
+  printf ("%s : Task = %d Res1 = %e Res2 = %e T1 = %.2f T2 = %.2f S = %d N = "
+          "%d M = %d P = %d\n",
+          prg_name, 24, r1, r2, t1, t2, int (s), n, m, ppppp);
 }

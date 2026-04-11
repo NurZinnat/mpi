@@ -16,7 +16,7 @@ application::application_main (size_t argc, char *argv[])
   if (has_error (status))
     return;
 
-  print_matrix ();
+  // print_matrix ();
 
   norm_calculate ();
 
@@ -26,6 +26,19 @@ application::application_main (size_t argc, char *argv[])
   init_norm ();
 
   triangulization ();
+  //return;
+
+  read_sub_matrix ();
+  if (has_error (status))
+    return;
+  calculate_left_discrepancy ();
+  //calculate_right_discrepancy ();
 
   print_matrix ();
+
+  if (get_process_index () == 0)
+    {
+      //printf ("\n");
+      print_results ();
+    }
 }

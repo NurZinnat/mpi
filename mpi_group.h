@@ -29,13 +29,16 @@ public:
   bool active ();
   bool inactive ();
   bool has_error (execution_status status);
-  void reduce_sum_arr (double *producer, double *consumer, size_t size);
+  void reduce_sum_arr_all (double *producer, double *consumer, size_t size);
+  void reduce_sum_arr (size_t recv_index, double *producer, double *consumer, size_t size);
   execution_status send_message (size_t index, size_t message_size, size_t tag,
                                  double *message);
   execution_status recv_message (size_t index, size_t message_size, size_t tag,
                                  double *message);
   void split (int color);
   MPI_Comm &get_comm ();
+  execution_status broadcast (size_t send_index, size_t arr_size, double *arr);
+  void barier ();
 };
 
 #endif // MPI_GROUP_H

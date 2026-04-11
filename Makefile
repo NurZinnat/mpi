@@ -33,8 +33,8 @@ TTT = a.out
 DEBUG_TARGET = debug.out
 
 # Список объектов
-OBJS = main.o application.o block_string.o cmd_arg_parser.o data.o data_view.o group_view.o householder_logic.o matrix_part.o mpi_group.o mpi_message.o m_sizes.o precision.o reflection_vectors.o rv_sizes.o simple_functions.o application_main.o block_sizes.o block_view.o
-OBJS_DEBUG = main_debug.o application_debug.o block_string_debug.o cmd_arg_parser_debug.o data_debug.o data_view_debug.o group_view_debug.o householder_logic_debug.o matrix_part_debug.o mpi_group_debug.o mpi_message_debug.o m_sizes_debug.o precision_debug.o reflection_vectors_debug.o rv_sizes_debug.o simple_functions_debug.o application_main_debug.o block_sizes_debug.o block_view_debug.o
+OBJS = main.o application.o block_string.o cmd_arg_parser.o data.o data_view.o discrepancy.o group_view.o householder_logic.o matrix_part.o mpi_group.o mpi_message.o multiply_strings.o m_sizes.o precision.o reflection_vectors.o rv_sizes.o simple_functions.o application_main.o block_sizes.o block_view.o
+OBJS_DEBUG = main_debug.o application_debug.o block_string_debug.o cmd_arg_parser_debug.o data_debug.o data_view_debug.o discrepancy_debug.o group_view_debug.o householder_logic_debug.o matrix_part_debug.o mpi_group_debug.o mpi_message_debug.o multiply_strings_debug.o m_sizes_debug.o precision_debug.o reflection_vectors_debug.o rv_sizes_debug.o simple_functions_debug.o application_main_debug.o block_sizes_debug.o block_view_debug.o
 
 # Цель по умолчанию - релизная сборка
 all: $(TTT)
@@ -69,6 +69,9 @@ data.o: data.cpp data.h execution_status.h
 data_view.o: data_view.cpp data_view.h
 	$(COMPILE) data_view.cpp
 
+discrepancy.o: discrepancy.cpp application.h
+	$(COMPILE) discrepancy.cpp
+
 group_view.o: group_view.cpp group_view.h
 	$(COMPILE) group_view.cpp
 
@@ -83,6 +86,9 @@ mpi_group.o: mpi_group.cpp mpi_group.h
 
 mpi_message.o: mpi_message.cpp mpi_message.h
 	$(COMPILE) mpi_message.cpp
+
+multiply_strings.o: multiply_strings.cpp application.h
+	$(COMPILE) multiply_strings.cpp
 
 m_sizes.o: m_sizes.cpp m_sizes.h
 	$(COMPILE) m_sizes.cpp
@@ -127,6 +133,9 @@ data_debug.o: data.cpp data.h execution_status.h
 data_view_debug.o: data_view.cpp data_view.h
 	$(COMPILE_DEBUG) data_view.cpp -o data_view_debug.o
 
+discrepancy_debug.o: discrepancy.cpp application.h
+	$(COMPILE_DEBUG) discrepancy.cpp -o discrepancy_debug.o
+
 group_view_debug.o: group_view.cpp group_view.h
 	$(COMPILE_DEBUG) group_view.cpp -o group_view_debug.o
 
@@ -141,6 +150,9 @@ mpi_group_debug.o: mpi_group.cpp mpi_group.h
 
 mpi_message_debug.o: mpi_message.cpp mpi_message.h
 	$(COMPILE_DEBUG) mpi_message.cpp -o mpi_message_debug.o
+
+multiply_strings_debug.o: multiply_strings.cpp application.h
+	$(COMPILE_DEBUG) multiply_strings.cpp -o multiply_strings_debug.o
 
 m_sizes_debug.o: m_sizes.cpp m_sizes.h
 	$(COMPILE_DEBUG) m_sizes.cpp -o m_sizes_debug.o

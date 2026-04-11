@@ -20,6 +20,8 @@ public:
   execution_status recv_message (MPI_Comm &comm, size_t index,
                                  size_t message_size, size_t tag,
                                  double *message);
+  execution_status broadcast (MPI_Comm &comm, size_t send_index,
+                              size_t arr_size, double *arr);
 };
 
 #endif // MPI_MESSAGE_H

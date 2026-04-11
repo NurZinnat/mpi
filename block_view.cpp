@@ -164,3 +164,17 @@ block_view::zero_padding ()
   for (size_t i = 0; i < size; i++)
     arr[i] = 0.0;
 }
+
+void
+block_view::sum_abs_columns (double *res_arr)
+{
+  size_t r_num = get_r_num ();
+  size_t c_num = get_c_num ();
+  double *arr = get_arr ();
+  for (size_t i = 0; i < r_num; i++)
+    {
+      double *sub_arr = arr + c_num * i;
+      for (size_t j = 0; j < c_num; j++)
+        res_arr[i] += std::fabs (sub_arr[j]);
+    }
+}

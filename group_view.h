@@ -10,6 +10,7 @@ class group_view : private mpi_message
   size_t group_id{};
   size_t group_size{};
   size_t index{};
+  size_t group_num{};
 
   MPI_Comm comm{};
   std::unique_ptr<size_t[]> index_map{};
@@ -27,8 +28,9 @@ public:
   size_t get_group_id ();
   size_t get_group_size ();
   size_t get_index ();
+  size_t get_group_num ();
   void create_group_for_triangulization (size_t start_index, size_t part_size,
-                                         size_t bin_step);
+                                         size_t bin_step, bool flag = false);
   execution_status send_message (size_t index, size_t message_size,
                                  size_t tag, double *message);
   execution_status recv_message (size_t index, size_t message_size,
@@ -36,8 +38,9 @@ public:
   execution_status send_message (size_t index, block_string &str, size_t tag);
   execution_status recv_message (size_t index, block_string &str, size_t tag);
   execution_status broad_cast (size_t arr_size, double *arr,
-                               size_t send_index);
+                               size_t send_index, bool flag = false);
   size_t get_real_index_broad_cast (size_t index_in_group, size_t start_index);
   size_t get_index_in_group_broad_cast (size_t real_index, size_t start_index);
+  size_t *get_index_map ();
 };
 #endif // GROUP_VIEW_H

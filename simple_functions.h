@@ -8,4 +8,5 @@ double max_from_array (size_t size, double *arr);
 void print_array (size_t size, double *arr);
 void array_add_to_first (size_t size, double *res_arr, double *arr);
 void arr_set_val (size_t arr_size, double *arr, double val);
+double array_sum (size_t arr_size, double *arr);
 #endif // SIMPLE_FUNCTIONS_H

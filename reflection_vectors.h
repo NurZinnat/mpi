@@ -52,10 +52,9 @@ public:
   void pop (reflection_type rv_type, size_t r_index, size_t c_index);
   size_t get_size (reflection_type rv_type, size_t r_index, size_t c_index);
 
-  void spread_triangular_reflection (block_string &str, block_view *blocks,
+  void spread_triangular_reflection (block_string &str,
                                      size_t c_start, size_t c_end);
-  void spread_reset_reflection (block_string &sub_str,
-                                block_string &str, block_view *blocks, size_t c_start,
+  void spread_reset_reflection (block_string *strings, size_t c_start,
                                 size_t c_end);
   
 };

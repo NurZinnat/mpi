@@ -3,14 +3,17 @@
 
 #include "block_sizes.h"
 #include "data_view.h"
+#include "execution_status.h"
 #include "m_sizes.h"
 #include "matrix_type.h"
 #include "precision.h"
-#include "execution_status.h"
 
 #include <math.h>
 
-class block_view : public block_sizes, public m_sizes, public data_view, public precision
+class block_view : public block_sizes,
+                   public m_sizes,
+                   public data_view,
+                   public precision
 {
 
 public:
@@ -29,6 +32,12 @@ public:
   execution_status inverse_triangular_upper (block_view &x);
   void zero_padding ();
   void print_debug ();
+  inline execution_status block_multiply (block_view &x, block_view &y);
+  inline execution_status sum_block_multiply (block_view &x, block_view &y);
+  void sum_abs_columns (double *res_arr);
 };
+
+#include "multy.inl"
+#include "sum_multy.inl"
 
 #endif // BLOCK_VIEW_H

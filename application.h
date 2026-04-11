@@ -14,9 +14,9 @@ class application : private m_sizes,
 {
   matrix_part matrix{};
   matrix_part sub_matrix{};
-  block_view blocks[3];
-  block_string str[2];
   reflection_vectors rv{};
+  block_string strings[2];
+  block_view blocks[3];
 
   execution_status status{};
   size_t print_size{};
@@ -37,6 +37,17 @@ class application : private m_sizes,
 
   std::unique_ptr<double[]> bufer_1{};
   std::unique_ptr<double[]> bufer_2{};
+  std::unique_ptr<double[]> for_blocks{};
+
+  double r1{};
+  double r2{};
+
+  double t1{};
+  double t2{};
+
+  int n{};
+  int m{};
+  int ppppp{};
 
 public:
   application () = default;
@@ -48,8 +59,11 @@ public:
 
   execution_status init_application ();
   execution_status read_matrix ();
+  execution_status read_sub_matrix ();
   void norm_calculate ();
   void print_matrix ();
+  void print_sub_matrix ();
+
   void print_transpozition_matrix ();
   void init_norm ();
   execution_status cmd_arg_parsing (size_t argc, char *argv[]);
@@ -72,6 +86,10 @@ public:
   double *get_bufer ();
   void find_diapazon (size_t len, size_t p, size_t index, size_t shift);
   void free_mpi ();
+  void calculate_left_discrepancy ();
+  void calculate_right_discrepancy ();
+  void multiply_strings (block_string *strings, block_view *blocks);
+  void print_results ();
 };
 
 #endif // APPLICATION_H
