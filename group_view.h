@@ -13,9 +13,10 @@ class group_view : private mpi_message
   size_t group_num{};
 
   MPI_Comm comm{};
+  size_t req_size{};
   std::unique_ptr<size_t[]> index_map{};
-  std::unique_ptr<MPI_Request[]> request{};
-  std::unique_ptr<MPI_Status[]> status{};
+  std::unique_ptr<MPI_Request[]> requests{};
+  std::unique_ptr<MPI_Status[]> statuses{};
 
 public:
   group_view () = default;
@@ -38,10 +39,13 @@ public:
                                  size_t tag, double *message);
   execution_status send_message (size_t index, block_string &str, size_t tag);
   execution_status recv_message (size_t index, block_string &str, size_t tag);
+  execution_status send_message_i (size_t index, block_string &str, size_t tag);
+  execution_status recv_message_i (size_t index, block_string &str, size_t tag);
   execution_status broad_cast (size_t arr_size, double *arr,
                                size_t send_index, size_t tag,  bool flag = false);
   size_t get_real_index_broad_cast (size_t index_in_group, size_t start_index);
   size_t get_index_in_group_broad_cast (size_t real_index, size_t start_index);
   size_t *get_index_map ();
+  execution_status wait_all (size_t size);
 };
 #endif // GROUP_VIEW_H

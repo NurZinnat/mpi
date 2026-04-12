@@ -28,6 +28,8 @@ public:
                                  double *message, MPI_Request &request);
   execution_status broadcast (MPI_Comm &comm, size_t send_index,
                               size_t arr_size, double *arr);
+
+  execution_status wait_all (size_t size, MPI_Request *requests, MPI_Status *statuses);
 };
 
 #endif // MPI_MESSAGE_H

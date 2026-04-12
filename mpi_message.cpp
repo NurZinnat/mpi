@@ -54,3 +54,11 @@ mpi_message::broadcast (MPI_Comm &comm, size_t send_index, size_t arr_size,
   MPI_Bcast (arr, arr_size, MPI_DOUBLE, send_index, comm);
   return execution_status::success;
 }
+
+execution_status
+mpi_message::wait_all (size_t size, MPI_Request *requests,
+                       MPI_Status *statuses)
+{
+  MPI_Waitall (size, requests, statuses);
+  return execution_status::success;
+}

@@ -10,8 +10,8 @@ group_view::init_group_view (MPI_Comm &_comm, size_t p)
 {
   comm = _comm;
   index_map = std::make_unique<size_t[]> (p);
-  request = std::make_unique<MPI_Request[]> (p);
-  status = std::make_unique<MPI_Status[]> (p);
+  requests = std::make_unique<MPI_Request[]> (p);
+  statuses = std::make_unique<MPI_Status[]> (p);
 
   return execution_status::success;
 }
@@ -67,6 +67,36 @@ group_view::recv_message (size_t index, block_string &str, size_t tag)
                                     message);
 }
 
+execution_status
+group_view::send_message_i (size_t index, block_string &str, size_t tag)
+{
+  double *message = str.get_arr ();
+  size_t message_size = str.get_arr_size ();
+  return mpi_message::send_message_i (comm, index_map[index], message_size,
+                                      tag, message, requests[req_size++]);
+}
+
+execution_status
+group_view::recv_message_i (size_t index, block_string &str, size_t tag)
+{
+  double *message = str.get_arr ();
+  size_t message_size = str.get_arr_size ();
+  return mpi_message::recv_message_i (comm, index_map[index], message_size,
+                                      tag, message, requests[req_size++]);
+}
+
+execution_status
+group_view::wait_all (size_t size)
+{
+  if (size > req_size)
+    {
+      printf ("group_view::wait_all:: size > real_req_size\n");
+      return execution_status::runtime_error;
+    }
+  req_size = 0;
+  return mpi_message::wait_all (size, requests.get (), statuses.get ());
+}
+
 size_t
 group_view::get_real_index_broad_cast (size_t index_in_group,
                                        size_t start_index)
@@ -84,8 +114,8 @@ group_view::get_index_in_group_broad_cast (size_t real_index,
 }
 
 execution_status
-group_view::broad_cast (size_t arr_size, double *arr, size_t send_index, size_t tag,
-                        bool flag)
+group_view::broad_cast (size_t arr_size, double *arr, size_t send_index,
+                        size_t tag, bool flag)
 {
   size_t real_index = get_real_index_broad_cast (index, send_index);
 
@@ -117,7 +147,8 @@ group_view::broad_cast (size_t arr_size, double *arr, size_t send_index, size_t 
   while (bin)
     {
       size_t i = get_index_in_group_broad_cast (real_index + bin, send_index);
-      mpi_message::send_message_i (comm, index_map[i], arr_size, tag, arr, request[i]);
+      mpi_message::send_message_i (comm, index_map[i], arr_size, tag, arr,
+                                   requests[i]);
       bin >>= 1;
     }
   return execution_status::success;
