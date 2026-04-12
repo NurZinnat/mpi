@@ -78,7 +78,7 @@ public:
                                 size_t c_start, size_t c_end);
   void triangulization ();
   void triangulization_local_part (size_t step);
-  void triangulization_communicate_part (size_t step);
+  void triangulization_communicate_part (size_t step, size_t step_tag);
 
   size_t calculate_global_b_row_index (size_t local_b_row_index);
   size_t calculate_local_b_row_index (size_t global_b_row_index);

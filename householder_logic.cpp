@@ -32,7 +32,7 @@ application::triangulization_local_part (size_t step)
 }
 
 void
-application::triangulization_communicate_part (size_t step)
+application::triangulization_communicate_part (size_t step, size_t step_tag)
 {
 
   size_t k = get_k ();
@@ -45,6 +45,8 @@ application::triangulization_communicate_part (size_t step)
   size_t count = 0;
   while (bin_step < len)
     {
+      size_t tag = step_tag + bin_step;
+      size_t broadcast_tag = tag + p;
       bool flag = step == 0 && count == 0;
       group.create_group_for_triangulization (step % p, len, bin_step, flag);
       size_t group_id = group.get_group_id ();
@@ -64,7 +66,8 @@ application::triangulization_communicate_part (size_t step)
       //           {
       //             printf (
       //                 "my_index = %ld, group_num = %ld, group_id = %ld, "
-      //                 "group_size = %ld, index_in_group = %ld, local_r_index "
+      //                 "group_size = %ld, index_in_group = %ld, local_r_index
+      //                 "
       //                 "= %ld, r_num_0 = %ld, r_num_last = %ld\n",
       //                 p_index, group.get_group_num (), group_id, group_size,
       //                 index_in_group, local_r_index, r_num_0, r_num_last);
@@ -76,14 +79,14 @@ application::triangulization_communicate_part (size_t step)
       //       }
       //     // return;
       //   }
-     
+
       if (index_in_group == 0)
         {
           for (size_t i = 1; i < group_size; i++)
             {
               find_diapazon (k - step, group_size, i, step);
               matrix.get_b_str (strings[0], local_r_index, start, end);
-              group.send_message (i, strings[0], step);
+              group.send_message (i, strings[0], tag);
               // double *real_end = matrix.get_arr ()
               //                    + m_size * b_size * local_r_index
               //                    + matrix.get_local_bost_size
@@ -98,9 +101,9 @@ application::triangulization_communicate_part (size_t step)
           matrix.get_b_str (strings[0], local_r_index, start, end);
           strings[1].set_params (get_bufer (), end - start, r_num_last,
                                  matrix.get_bost_size (end - 1));
-                      
+
           // if (!flag)
-            group.recv_message (group_size - 1, strings[1], step);
+          group.recv_message (group_size - 1, strings[1], tag);
           strings[0].get_block (blocks[0], 0);
           strings[1].get_block (blocks[1], 0);
           rv.build_reset_reflection (blocks[0], blocks[1]);
@@ -108,18 +111,18 @@ application::triangulization_communicate_part (size_t step)
       else if (index_in_group == group_size - 1)
         {
           // if (!flag)
-            for (size_t i = 0; i < group_size - 1; i++)
-              {
-                find_diapazon (k - step, group_size, i, step);
-                matrix.get_b_str (strings[1], local_r_index, start, end);
-                group.send_message (i, strings[1], step);
-              }
+          for (size_t i = 0; i < group_size - 1; i++)
+            {
+              find_diapazon (k - step, group_size, i, step);
+              matrix.get_b_str (strings[1], local_r_index, start, end);
+              group.send_message (i, strings[1], tag);
+            }
 
           find_diapazon (k - step, group_size, index_in_group, step);
           matrix.get_b_str (strings[1], local_r_index, start, end);
           strings[0].set_params (get_bufer (), end - start, r_num_0,
                                  matrix.get_bost_size (end - 1));
-          group.recv_message (0, strings[0], step);
+          group.recv_message (0, strings[0], tag);
         }
       else
         {
@@ -127,20 +130,19 @@ application::triangulization_communicate_part (size_t step)
 
           strings[0].set_params (get_bufer (), end - start, r_num_0,
                                  matrix.get_bost_size (end - 1));
-          group.recv_message (0, strings[0], step);
+          group.recv_message (0, strings[0], tag);
 
           strings[1].set_params (get_bufer () + strings[0].get_arr_size (),
                                  end - start, r_num_last,
                                  matrix.get_bost_size (end - 1));
-          group.recv_message (group_size - 1, strings[1], step);
+          group.recv_message (group_size - 1, strings[1], tag);
         }
 
       double *rv_arr = rv.get_shift_arr ();
       size_t rv_arr_size = b_size * (r_num_last + 1);
       rv.set_vector_size (r_num_last + 1);
 
-      group.broad_cast (rv_arr_size, rv_arr, 0, flag);
-      
+      group.broad_cast (rv_arr_size, rv_arr, 0, broadcast_tag ,flag);
 
       size_t str_start = 0, str_end = end - start;
       str_start += index_in_group == 0;
@@ -150,28 +152,28 @@ application::triangulization_communicate_part (size_t step)
       // return;
       if (index_in_group == 0)
         {
-          group.send_message (group_size - 1, strings[1], step);
+          group.send_message (group_size - 1, strings[1], tag);
           for (size_t i = 1; i < group_size; i++)
             {
               find_diapazon (k - step, group_size, i, step);
               matrix.get_b_str (strings[0], local_r_index, start, end);
-              group.recv_message (i, strings[0], step);
+              group.recv_message (i, strings[0], tag);
             }
         }
       else if (index_in_group == group_size - 1)
         {
-          group.send_message (0, strings[0], step);
+          group.send_message (0, strings[0], tag);
           for (size_t i = 0; i < group_size - 1; i++)
             {
               find_diapazon (k - step, group_size, i, step);
               matrix.get_b_str (strings[1], local_r_index, start, end);
-              group.recv_message (i, strings[1], step);
+              group.recv_message (i, strings[1], tag);
             }
         }
       else
         {
-          group.send_message (0, strings[0], step);
-          group.send_message (group_size - 1, strings[1], step);
+          group.send_message (0, strings[0], tag);
+          group.send_message (group_size - 1, strings[1], tag);
         }
       bin_step <<= 1;
       bin_step_x2 <<= 1;
@@ -189,12 +191,15 @@ void
 application::triangulization ()
 {
   size_t k = get_k ();
+  size_t tag_step = get_active_process () * 2;
+  size_t tag{};
   for (size_t step = 0; step < k; step++)
     {
 
       triangulization_local_part (step);
 
-      triangulization_communicate_part (step);
+      triangulization_communicate_part (step, tag);
+      tag = (tag + tag_step) % 32000;
       // if (step == 0)
       //   return;
     }

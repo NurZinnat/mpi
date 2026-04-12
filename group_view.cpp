@@ -84,7 +84,7 @@ group_view::get_index_in_group_broad_cast (size_t real_index,
 }
 
 execution_status
-group_view::broad_cast (size_t arr_size, double *arr, size_t send_index,
+group_view::broad_cast (size_t arr_size, double *arr, size_t send_index, size_t tag,
                         bool flag)
 {
   size_t real_index = get_real_index_broad_cast (index, send_index);
@@ -102,7 +102,7 @@ group_view::broad_cast (size_t arr_size, double *arr, size_t send_index,
   if (bin)
     {
       size_t i = get_index_in_group_broad_cast (real_index - bin, send_index);
-      mpi_message::recv_message (comm, index_map[i], arr_size, bin, arr);
+      mpi_message::recv_message (comm, index_map[i], arr_size, tag, arr);
       bin >>= 1;
       while (real_index + bin >= group_size)
         bin >>= 1;
@@ -117,7 +117,7 @@ group_view::broad_cast (size_t arr_size, double *arr, size_t send_index,
   while (bin)
     {
       size_t i = get_index_in_group_broad_cast (real_index + bin, send_index);
-      mpi_message::send_message_i (comm, index_map[i], arr_size, bin, arr, request[i]);
+      mpi_message::send_message_i (comm, index_map[i], arr_size, tag, arr, request[i]);
       bin >>= 1;
     }
   return execution_status::success;

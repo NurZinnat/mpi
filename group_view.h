@@ -39,7 +39,7 @@ public:
   execution_status send_message (size_t index, block_string &str, size_t tag);
   execution_status recv_message (size_t index, block_string &str, size_t tag);
   execution_status broad_cast (size_t arr_size, double *arr,
-                               size_t send_index, bool flag = false);
+                               size_t send_index, size_t tag,  bool flag = false);
   size_t get_real_index_broad_cast (size_t index_in_group, size_t start_index);
   size_t get_index_in_group_broad_cast (size_t real_index, size_t start_index);
   size_t *get_index_map ();
