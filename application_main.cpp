@@ -29,7 +29,7 @@ application::application_main (size_t argc, char *argv[])
   //print_matrix ();
   //return;
 
-  read_sub_matrix ();
+  //read_sub_matrix ();
   if (has_error (status))
     return;
   //calculate_left_discrepancy ();

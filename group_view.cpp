@@ -73,7 +73,7 @@ group_view::send_message_i (size_t index, block_string &str, size_t tag)
   double *message = str.get_arr ();
   size_t message_size = str.get_arr_size ();
   return mpi_message::send_message_i (comm, index_map[index], message_size,
-                                      tag, message, requests[req_size++]);
+                                      tag, message, req_null);
 }
 
 execution_status

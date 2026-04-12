@@ -18,6 +18,8 @@ class group_view : private mpi_message
   std::unique_ptr<MPI_Request[]> requests{};
   std::unique_ptr<MPI_Status[]> statuses{};
 
+  MPI_Request req_null = MPI_REQUEST_NULL;
+
 public:
   group_view () = default;
   ~group_view () = default;

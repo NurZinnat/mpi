@@ -196,5 +196,13 @@ gdb: $(DEBUG_TARGET)
 # Отладка в gdb (текущий терминал, без xterm)
 gdb-here: $(DEBUG_TARGET)
 	$(MPI_ENV) $(MPIRUN) -np $(PROC) gdb --args ./$(DEBUG_TARGET) $(ARGS)
+	
+# Запуск под Valgrind (проверка утечек памяти и ошибок)
+valgrind: $(DEBUG_TARGET)
+	$(MPI_ENV) $(MPIRUN) -np $(PROC) valgrind --leak-check=full --track-origins=yes ./$(DEBUG_TARGET) $(ARGS)
 
-.PHONY: all debug clean run-release run-debug gdb gdb-here
+# Запуск под Valgrind с выводом в файл
+valgrind-log: $(DEBUG_TARGET)
+	$(MPI_ENV) $(MPIRUN) -np $(PROC) valgrind --leak-check=full --track-origins=yes --log-file=valgrind_%p.log ./$(DEBUG_TARGET) $(ARGS)
+
+.PHONY: all debug clean run-release run-debug gdb gdb-here valgrind valgrind-log
