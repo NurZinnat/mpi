@@ -86,7 +86,7 @@ application::triangulization_communicate_part (size_t step, size_t step_tag)
             {
               find_diapazon (k - step, group_size, i, step);
               matrix.get_b_str (strings[0], local_r_index, start, end);
-              group.send_message (i, strings[0], tag);
+              group.send_message_i (i, strings[0], tag);
               // double *real_end = matrix.get_arr ()
               //                    + m_size * b_size * local_r_index
               //                    + matrix.get_local_bost_size
