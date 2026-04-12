@@ -246,6 +246,20 @@ matrix_part::get_block (block_view &b, size_t local_r_index, size_t c_index)
 }
 
 void
+matrix_part::get_transpozition_block (block_view &b, size_t local_r_index, size_t c_index)
+{
+  size_t m_size = get_m_size ();
+  size_t b_size = get_b_size ();
+  size_t rb_size = get_local_bost_size (local_r_index);
+  double *arr = get_arr () + m_size * b_size * local_r_index;
+  arr += rb_size * b_size * c_index;
+  b.set_arr (arr);
+  b.set_r_num (rb_size);
+  b.set_c_num (get_bost_size (c_index));
+  b.set_m_type (matrix_type::ordinary);
+}
+
+void
 matrix_part::set_block (block_view &b, size_t local_r_index, size_t c_index)
 {
   double *arr = get_arr () + get_ordinary_b_str_size () * local_r_index;

@@ -21,8 +21,9 @@ application::calculate_left_discrepancy ()
           for (size_t i = 0; i < part_size; i++)
             {
               sub_matrix.get_block (blocks[1], i, c_index);
-              matrix.get_block (blocks[2], i, r_index);
+              matrix.get_transpozition_block (blocks[2], i, r_index);
               blocks[0].sum_block_multiply (blocks[1], blocks[2]);
+              
             }
           size_t r_num = blocks[0].get_r_num ();
           size_t c_num = blocks[0].get_c_num ();
@@ -30,6 +31,7 @@ application::calculate_left_discrepancy ()
           blocks[0].set_arr (for_blocks.get () + size);
           reduce_sum_arr (0, for_blocks.get (), blocks[0].get_arr (), size);
           blocks[0].sum_abs_columns (result_arr);
+          
         }
       if (p_index == 0)
         r1 = std::max (r1, max_from_array (b_size, result_arr));

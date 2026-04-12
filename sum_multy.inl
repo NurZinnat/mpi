@@ -8,6 +8,8 @@ block_view::sum_block_multiply (block_view &x, block_view &y)
       printf ("x_c_num = %ld, y_r_num = %ld\n", x.get_c_num (), y.get_r_num ());
       printf ("x_r_n = %ld y_c_n = %ld\n", r_n, c_n);
       printf ("sum: не совпдают рамерности\n");
+      x.print ();
+      y.print ();
       return execution_status::inval_arg;
     }
 

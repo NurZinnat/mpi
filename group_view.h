@@ -14,7 +14,8 @@ class group_view : private mpi_message
 
   MPI_Comm comm{};
   std::unique_ptr<size_t[]> index_map{};
-  size_t index_map_size{};
+  std::unique_ptr<MPI_Request[]> request{};
+  std::unique_ptr<MPI_Status[]> status{};
 
 public:
   group_view () = default;

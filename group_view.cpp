@@ -10,6 +10,9 @@ group_view::init_group_view (MPI_Comm &_comm, size_t p)
 {
   comm = _comm;
   index_map = std::make_unique<size_t[]> (p);
+  request = std::make_unique<MPI_Request[]> (p);
+  status = std::make_unique<MPI_Status[]> (p);
+
   return execution_status::success;
 }
 size_t
@@ -85,12 +88,6 @@ group_view::broad_cast (size_t arr_size, double *arr, size_t send_index,
                         bool flag)
 {
   size_t real_index = get_real_index_broad_cast (index, send_index);
-  // bool flag1 = flag && group_id == 1;
-  // if (flag1)
-  //   {
-  //     printf ("send_index = %ld index = %ld real_index = %ld\n", send_index,
-  //             index, real_index);
-  //   }
 
   size_t start_index = 0;
   size_t bin = 0;
@@ -120,7 +117,7 @@ group_view::broad_cast (size_t arr_size, double *arr, size_t send_index,
   while (bin)
     {
       size_t i = get_index_in_group_broad_cast (real_index + bin, send_index);
-      mpi_message::send_message (comm, index_map[i], arr_size, bin, arr);
+      mpi_message::send_message_i (comm, index_map[i], arr_size, bin, arr, request[i]);
       bin >>= 1;
     }
   return execution_status::success;
@@ -200,9 +197,11 @@ group_view::create_group_for_triangulization (size_t start_index,
           group_size++;
           // if (flag && group_id == 1)
           //   printf (
-          //       "my_index = %ld index_in_part = %ld index = %ld real_index = "
+          //       "my_index = %ld index_in_part = %ld index = %ld real_index =
+          //       "
           //       "%ld buf = %ld group_size = %ld\n",
-          //       my_index, index_in_part, index, real_index, buf, group_size);
+          //       my_index, index_in_part, index, real_index, buf,
+          //       group_size);
         }
       else
         {

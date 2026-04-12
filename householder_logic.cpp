@@ -45,7 +45,7 @@ application::triangulization_communicate_part (size_t step)
   size_t count = 0;
   while (bin_step < len)
     {
-      bool flag = step == 3 && count == 0;
+      bool flag = step == 0 && count == 0;
       group.create_group_for_triangulization (step % p, len, bin_step, flag);
       size_t group_id = group.get_group_id ();
       size_t index_in_group = group.get_index ();
@@ -56,7 +56,6 @@ application::triangulization_communicate_part (size_t step)
           = matrix.get_bost_size (step + bin_step_x2 * group_id + bin_step);
       // if (flag)
       //   {
-      //     //return;
       //     size_t *index_map = group.get_index_map ();
       //     for (size_t i = 0; i < p; i++)
       //       {
@@ -75,9 +74,9 @@ application::triangulization_communicate_part (size_t step)
       //           }
       //         barier ();
       //       }
-      //     return;
+      //     // return;
       //   }
-
+     
       if (index_in_group == 0)
         {
           for (size_t i = 1; i < group_size; i++)
@@ -99,19 +98,22 @@ application::triangulization_communicate_part (size_t step)
           matrix.get_b_str (strings[0], local_r_index, start, end);
           strings[1].set_params (get_bufer (), end - start, r_num_last,
                                  matrix.get_bost_size (end - 1));
-          group.recv_message (group_size - 1, strings[1], step);
+                      
+          // if (!flag)
+            group.recv_message (group_size - 1, strings[1], step);
           strings[0].get_block (blocks[0], 0);
           strings[1].get_block (blocks[1], 0);
           rv.build_reset_reflection (blocks[0], blocks[1]);
         }
       else if (index_in_group == group_size - 1)
         {
-          for (size_t i = 0; i < group_size - 1; i++)
-            {
-              find_diapazon (k - step, group_size, i, step);
-              matrix.get_b_str (strings[1], local_r_index, start, end);
-              group.send_message (i, strings[1], step);
-            }
+          // if (!flag)
+            for (size_t i = 0; i < group_size - 1; i++)
+              {
+                find_diapazon (k - step, group_size, i, step);
+                matrix.get_b_str (strings[1], local_r_index, start, end);
+                group.send_message (i, strings[1], step);
+              }
 
           find_diapazon (k - step, group_size, index_in_group, step);
           matrix.get_b_str (strings[1], local_r_index, start, end);
@@ -136,10 +138,9 @@ application::triangulization_communicate_part (size_t step)
       double *rv_arr = rv.get_shift_arr ();
       size_t rv_arr_size = b_size * (r_num_last + 1);
       rv.set_vector_size (r_num_last + 1);
-     
+
       group.broad_cast (rv_arr_size, rv_arr, 0, flag);
-      //  if (flag)
-      //   return;
+      
 
       size_t str_start = 0, str_end = end - start;
       str_start += index_in_group == 0;
@@ -194,7 +195,7 @@ application::triangulization ()
       triangulization_local_part (step);
 
       triangulization_communicate_part (step);
-      // if (step == 3)
+      // if (step == 0)
       //   return;
     }
 }

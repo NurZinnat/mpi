@@ -30,11 +30,13 @@ public:
   void init_block_view (size_t m_size, size_t b_size, double eps);
   bool square ();
   execution_status inverse_triangular_upper (block_view &x);
+  execution_status inverse_triangular_lower (block_view &x);
   void zero_padding ();
   void print_debug ();
   inline execution_status block_multiply (block_view &x, block_view &y);
   inline execution_status sum_block_multiply (block_view &x, block_view &y);
   void sum_abs_columns (double *res_arr);
+  void print_real ();
 };
 
 #include "multy.inl"

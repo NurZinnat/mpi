@@ -145,6 +145,76 @@ block_view::inverse_triangular_upper (block_view &x)
   return execution_status::success;
 }
 
+execution_status
+block_view::inverse_triangular_lower (block_view &x)
+{
+  double eps = get_eps ();
+  if (get_arr_size () < x.get_arr_size ())
+    {
+      printf ("block::inverse_lower_triangular:: результирующий блок меньше "
+              "по размеру. Требуется перевыделение памяти\n");
+      return execution_status::runtime_error;
+    }
+  if (x.get_m_type () != matrix_type::triangular_lower)
+    {
+      printf ("block::inverse_lower_triangular: обращаемая матрица не "
+              "нижнетреугольная\n");
+      return execution_status::inval_arg;
+    }
+  set_r_num (x.get_r_num ());
+  set_c_num (x.get_c_num ());
+  size_t r_n = get_r_num (), c_n = get_c_num ();
+  double *arr = get_arr (), *x_arr = x.get_arr ();
+
+  // Инициализируем всю матрицу нулями
+  for (size_t i = 0; i < r_n; i++)
+    for (size_t j = 0; j < c_n; j++)
+      arr[c_n * i + j] = 0;
+
+  // Обработка первой строки (диагональный элемент [0][0])
+  double divider = x_arr[0]; // x_arr[c_n * 0 + 0]
+  if (fabs (divider) < eps)
+    return execution_status::small_divider;
+
+  arr[0] = 1.0 / divider;
+
+  // Обработка остальных строк сверху вниз
+  for (size_t i = 1; i < r_n; i++)
+    {
+      // Диагональный элемент
+      divider = x_arr[c_n * i + i];
+      if (fabs (divider) < eps)
+        {
+          return execution_status::small_divider;
+        }
+
+      arr[c_n * i + i] = 1.0 / divider;
+
+      // Поддиагональные элементы (в нижнетреугольной матрице это элементы слева от диагонали)
+      // Для L^{-1}: L_ii * X_ij + sum(L_ik * X_kj) = 0, где k < i и k <= j
+      // Так как результат тоже нижнетреугольный, j меняется от 0 до i-1
+      for (size_t j = 0; j < i; j++)
+        {
+          double sum = 0;
+          // Суммируем произведение элементов строки i исходной матрицы (от 0 до j)
+          // на соответствующие элементы уже вычисленного столбца j результата (от 0 до j)
+          // Формула: X_ij = - (sum_{k=j}^{i-1} L_ik * X_kj) / L_ii
+          // Но так как L_ik = 0 при k > i, а X_kj = 0 при k < j (нижнетреугольность результата),
+          // сумма идет от k = j до i - 1.
+          
+          for (size_t k = j; k < i; k++)
+            {
+              sum += x_arr[c_n * i + k] * arr[c_n * k + j];
+            }
+          
+          arr[c_n * i + j] = -sum / divider;
+        }
+    }
+
+  set_m_type (matrix_type::triangular_lower);
+  return execution_status::success;
+}
+
 block_view &
 block_view::operator*= (double val)
 {
@@ -177,4 +247,20 @@ block_view::sum_abs_columns (double *res_arr)
       for (size_t j = 0; j < c_num; j++)
         res_arr[i] += std::fabs (sub_arr[j]);
     }
+}
+
+
+void
+block_view::print_real ()
+{
+  size_t r_num = get_r_num ();
+  size_t c_num = get_c_num ();
+  double *arr = get_arr ();
+  for (size_t i = 0; i < c_num; i++)
+    {
+    for (size_t j = 0; j < r_num; j++)
+      printf ("%10.3e ", arr[i + c_num * j]);
+    printf ("\n");
+    }
+
 }

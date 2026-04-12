@@ -29,6 +29,25 @@ mpi_message::recv_message (MPI_Comm &comm, size_t index, size_t message_size,
 }
 
 execution_status
+mpi_message::send_message_i (MPI_Comm &comm, size_t index, size_t message_size,
+                             size_t tag, double *message, MPI_Request &request)
+{
+  MPI_Isend (message, static_cast<int> (message_size), MPI_DOUBLE,
+             static_cast<int> (index), static_cast<int> (tag), comm, &request);
+  return execution_status::success;
+}
+
+// Асинхронный прием
+execution_status
+mpi_message::recv_message_i (MPI_Comm &comm, size_t index, size_t message_size,
+                             size_t tag, double *message, MPI_Request &request)
+{
+  MPI_Irecv (message, static_cast<int> (message_size), MPI_DOUBLE,
+             static_cast<int> (index), static_cast<int> (tag), comm, &request);
+  return execution_status::success;
+}
+
+execution_status
 mpi_message::broadcast (MPI_Comm &comm, size_t send_index, size_t arr_size,
                         double *arr)
 {

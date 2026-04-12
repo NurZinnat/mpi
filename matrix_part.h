@@ -1,8 +1,8 @@
 #ifndef MATRIX_PART_H
 #define MATRIX_PART_H
+#include "block_string.h"
 #include "block_view.h"
 #include "data.h"
-#include "block_string.h"
 class matrix_part : public m_sizes, public data
 {
 private:
@@ -40,8 +40,11 @@ public:
   void set_norm (double val);
   size_t get_local_bost_size (size_t index);
   void get_block (block_view &b, size_t local_r_index, size_t c_index);
+  void get_transpozition_block (block_view &b, size_t local_r_index,
+                                size_t c_index);
   void set_block (block_view &b, size_t local_r_index, size_t c_index);
-  void get_b_str (block_string &b_str, size_t local_index, size_t start, size_t end);
+  void get_b_str (block_string &b_str, size_t local_index, size_t start,
+                  size_t end);
 };
 
 #endif // MATRIX_PART_H
