@@ -166,6 +166,7 @@ group_view::create_group_for_triangulization (size_t start_index,
                                               size_t bin_step, bool flag)
 {
 
+
   size_t bin_step_x2 = 2 * bin_step;
   int buf{};
   MPI_Comm_rank (comm, &buf);
@@ -277,8 +278,14 @@ group_view::create_group_for_triangulization (size_t start_index,
       return;
     }
   size_t kkk = real_index_start / real_step;
-  size_t rrr = real_index_start / real_step;
-  size_t ttt = bin_step_x2 * kkk + 1 + rrr + (1 + rrr >= bin_step);
+  size_t rrr = real_index_start % real_step;
+  size_t ttt = bin_step_x2 * kkk + (kkk < group_num) + rrr + (1 + rrr >= bin_step);
+  // if (flag && group_id == 1)
+  //   {
+  //     printf ("real_index_start = %ld real_step = %ld kkk = %ld rrr = %ld ttt "
+  //             "= %ld\n",
+  //             real_index_start, real_step, kkk, rrr, ttt);
+  //   }
   if (flag)
     kkk++;
   size_t i = 1;
