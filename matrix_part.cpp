@@ -24,12 +24,11 @@ matrix_part::init_matrix_part (size_t m_size, size_t b_size, size_t _index,
   part_index = _index;
   p = _p;
   size_t k = get_k ();
-  //size_t r = get_r ();
+  // size_t r = get_r ();
   part_size = k / p + (k % p && part_index <= (k - 1) % p ? 1 : 0);
   // printf ("k = %ld p = %ld part_size = %ld\n", k, p, part_size);
 
-  size_t arr_size
-      = m_size * b_size * part_size;
+  size_t arr_size = m_size * b_size * part_size;
   // printf ("arr_size = %ld\n", arr_size);
 
   return data_memory_allocate (arr_size);
@@ -246,7 +245,8 @@ matrix_part::get_block (block_view &b, size_t local_r_index, size_t c_index)
 }
 
 void
-matrix_part::get_transpozition_block (block_view &b, size_t local_r_index, size_t c_index)
+matrix_part::get_b_transpozition_block (block_view &b, size_t local_r_index,
+                                        size_t c_index)
 {
   size_t m_size = get_m_size ();
   size_t b_size = get_b_size ();
@@ -259,6 +259,46 @@ matrix_part::get_transpozition_block (block_view &b, size_t local_r_index, size_
   b.set_m_type (matrix_type::ordinary);
 }
 
+void
+matrix_part::get_transpozition_block (block_view &b, size_t local_r_index,
+                                      size_t c_index)
+{
+  size_t m_size = get_m_size ();
+  size_t b_size = get_b_size ();
+  size_t rb_size = get_local_bost_size (local_r_index);
+  size_t cb_size = get_bost_size (c_index);
+  double *arr = get_arr () + m_size * b_size * local_r_index;
+  double *b_arr = b.get_arr ();
+  arr += rb_size * b_size * c_index;
+  b.set_r_num (rb_size);
+  b.set_c_num (cb_size);
+  for (size_t i = 0; i < cb_size; i++)
+    {
+      for (size_t j = 0; j < rb_size; j++)
+        b_arr[cb_size * j + i] = arr[j];
+      arr += rb_size;
+    }
+  b.set_m_type (matrix_type::ordinary);
+}
+
+void
+matrix_part::set_transpozition_block (block_view &b, size_t local_r_index,
+                                      size_t c_index)
+{
+  size_t m_size = get_m_size ();
+  size_t b_size = get_b_size ();
+  size_t rb_size = b.get_r_num ();
+  size_t cb_size = b.get_c_num ();
+  double *arr = get_arr () + m_size * b_size * local_r_index;
+  double *b_arr = b.get_arr ();
+  arr += rb_size * b_size * c_index;
+  for (size_t i = 0; i < cb_size; i++)
+    {
+      for (size_t j = 0; j < rb_size; j++)
+        arr[j] = b_arr[cb_size * j + i];
+      arr += rb_size;
+    }
+}
 void
 matrix_part::set_block (block_view &b, size_t local_r_index, size_t c_index)
 {
@@ -282,6 +322,7 @@ matrix_part::get_b_str (block_string &str, size_t local_index, size_t start,
   size_t m_size = get_m_size ();
   size_t r_num = get_local_bost_size (local_index);
   size_t ost = get_bost_size (end - 1);
-  double *arr = get_arr () + b_size * m_size * local_index + r_num * b_size * start;
+  double *arr
+      = get_arr () + b_size * m_size * local_index + r_num * b_size * start;
   str.set_params (arr, end - start, r_num, ost);
 }

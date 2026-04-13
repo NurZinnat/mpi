@@ -44,7 +44,7 @@ application::init_application ()
   print_size = r;
   bufer_1 = std::make_unique<double[]> (b_size);
   bufer_2 = std::make_unique<double[]> (b_size);
-  for_blocks = std::make_unique<double[]> (b_size * b_size * 2);
+  for_blocks = std::make_unique<double[]> (b_size * b_size * 3);
 
   for (size_t i = 0; i < 2; i++)
     strings[i].init_m_sizes (m_size, b_size);
@@ -340,7 +340,9 @@ void
 application::init_norm ()
 {
   matrix.set_norm (norm);
-  rv.set_eps (norm);
+  rv.set_eps (EPSILON);
+  for (size_t i = 0; i < 3; i++)
+    blocks[i].set_eps (norm * EPSILON * m_size);
 }
 
 execution_status

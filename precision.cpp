@@ -9,7 +9,7 @@ precision::get_eps () const
 void
 precision::set_eps (double val)
 {
-  eps = val * EPSILON;
+  eps = val;
 }
 
 bool

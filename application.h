@@ -90,6 +90,7 @@ public:
   void calculate_right_discrepancy ();
   void multiply_strings (block_string *strings, block_view *blocks);
   void print_results ();
+  execution_status inverse_diagonal_blocks ();
 };
 
 #endif // APPLICATION_H

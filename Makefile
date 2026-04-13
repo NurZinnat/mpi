@@ -33,8 +33,8 @@ TTT = a.out
 DEBUG_TARGET = debug.out
 
 # Список объектов
-OBJS = main.o application.o block_string.o cmd_arg_parser.o data.o data_view.o discrepancy.o group_view.o householder_logic.o matrix_part.o mpi_group.o mpi_message.o multiply_strings.o m_sizes.o precision.o reflection_vectors.o rv_sizes.o simple_functions.o application_main.o block_sizes.o block_view.o
-OBJS_DEBUG = main_debug.o application_debug.o block_string_debug.o cmd_arg_parser_debug.o data_debug.o data_view_debug.o discrepancy_debug.o group_view_debug.o householder_logic_debug.o matrix_part_debug.o mpi_group_debug.o mpi_message_debug.o multiply_strings_debug.o m_sizes_debug.o precision_debug.o reflection_vectors_debug.o rv_sizes_debug.o simple_functions_debug.o application_main_debug.o block_sizes_debug.o block_view_debug.o
+OBJS = main.o application.o block_string.o cmd_arg_parser.o data.o data_view.o discrepancy.o group_view.o householder_logic.o matrix_part.o mpi_group.o mpi_message.o multiply_strings.o m_sizes.o precision.o reflection_vectors.o rv_sizes.o simple_functions.o application_main.o block_sizes.o block_view.o inverse_triangular.o
+OBJS_DEBUG = main_debug.o application_debug.o block_string_debug.o cmd_arg_parser_debug.o data_debug.o data_view_debug.o discrepancy_debug.o group_view_debug.o householder_logic_debug.o matrix_part_debug.o mpi_group_debug.o mpi_message_debug.o multiply_strings_debug.o m_sizes_debug.o precision_debug.o reflection_vectors_debug.o rv_sizes_debug.o simple_functions_debug.o application_main_debug.o block_sizes_debug.o block_view_debug.o inverse_triangular_debug.o
 
 # Цель по умолчанию - релизная сборка
 all: $(TTT)
@@ -114,6 +114,9 @@ block_sizes.o: block_sizes.cpp block_sizes.h
 block_view.o: block_view.cpp block_view.h
 	$(COMPILE) block_view.cpp
 
+inverse_triangular.o: inverse_triangular.cpp application.h
+	$(COMPILE) inverse_triangular.cpp
+
 # Правила для отладочных объектных файлов
 main_debug.o: main.cpp
 	$(COMPILE_DEBUG) main.cpp -o main_debug.o
@@ -177,6 +180,9 @@ block_sizes_debug.o: block_sizes.cpp block_sizes.h
 
 block_view_debug.o: block_view.cpp block_view.h
 	$(COMPILE_DEBUG) block_view.cpp -o block_view_debug.o
+
+inverse_triangular_debug.o: inverse_triangular.cpp application.h
+	$(COMPILE_DEBUG) inverse_triangular.cpp -o inverse_triangular_debug.o
 
 clean:
 	rm -rf *.o $(TTT) $(DEBUG_TARGET) *.d

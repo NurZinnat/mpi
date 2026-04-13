@@ -40,8 +40,12 @@ public:
   void set_norm (double val);
   size_t get_local_bost_size (size_t index);
   void get_block (block_view &b, size_t local_r_index, size_t c_index);
+  void get_b_transpozition_block (block_view &b, size_t local_r_index,
+                                  size_t c_index);
   void get_transpozition_block (block_view &b, size_t local_r_index,
-                                size_t c_index);
+                                  size_t c_index);
+  void set_transpozition_block (block_view &b, size_t local_r_index,
+                                  size_t c_index);
   void set_block (block_view &b, size_t local_r_index, size_t c_index);
   void get_b_str (block_string &b_str, size_t local_index, size_t start,
                   size_t end);
